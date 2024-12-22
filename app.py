@@ -1,19 +1,23 @@
+import os
 from cs50 import SQL
 from flask import Flask, render_template, session, redirect, url_for, request
-
 from help import login_required
 
 app = Flask(__name__)
-app.secret_key = 'Chave secreta!'
+app.secret_key = os.urandom(24)
 
 @app.route('/')
-def home():
-    return render_template('layout.html')
+@login_required
+def index():
+    return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    session.clear()
     if request.method == 'POST':
         session['user_id'] = request.form['username']
-        return redirect(url_for('dashboard'))
-    else:
-         return render_template("login.html")
+        return redirect(url_for('index'))
+    return render_template('login.html')
+
+if __name__ == "__main__":
+    app.run(debug=True)
