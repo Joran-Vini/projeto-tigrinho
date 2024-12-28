@@ -9,7 +9,7 @@ app.secret_key = os.urandom(24)
 @app.route('/')
 @login_required
 def index():
-    return render_template('index.html')
+    return render_template('layout.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -18,6 +18,11 @@ def login():
         session['user_id'] = request.form['username']
         return redirect(url_for('index'))
     return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    return render_template("register.html")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
