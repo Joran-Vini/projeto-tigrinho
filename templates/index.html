@@ -1,6 +1,21 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Inicio
+   Página Inicial
 {% endblock %}
 {% block main %}
+<div class="container text-center">
+    <h1 class="my-4">Bem-vindo ao Mini Cassino!</h1>
+    <p class="lead">Aqui você pode jogar e descobrir como os cassinos manipulam as probabilidades para vencer.</p>
+    <div class="my-4">
+        {% if 'user_id' in session %}
+        {% if saldo is not none %}
+        <p>Saldo Atual: {{ saldo }} fichas</p>
+    {% endif %}
+            <p>Boa sorte nos jogos!</p>
+        {% else %}
+            <p><strong>Faça login ou registre-se para começar a jogar.</strong></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

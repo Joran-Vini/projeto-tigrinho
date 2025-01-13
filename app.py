@@ -12,21 +12,44 @@ db = SQL("sqlite:///tigrinho.db")
 @app.route('/')
 @login_required
 def index():
-    return render_template('layout.html')
+    user_id = session['user_id']
+    user = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)
+    saldo = user[0]['saldo']
+    return render_template('index.html', saldo=saldo)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    #Limpar os dados da sessão anterior
     session.clear()
+    #Checar se é POST
     if request.method == 'POST':
-        session['user_id'] = request.form['username']
-        return redirect(url_for('index'))
+    #Pegar o username e senha
+       username = request.form.get('username')
+       password = request.form.get('password')
+       #checar se usuario colocou username ou senha
+       if not username or not password:
+        return "Preencha todos os campos!", 400
+       #Obter usuario no db
+       user = db.execute("SELECT * FROM users WHERE username = ?", username)
+       #Verificar se usuario existe e se a senha esta correta
+       if len(user) != 1 or not check_password_hash(user[0]['password'], password):
+            return "Usuário ou senha inválidos!", 400
+       #redirecionar usuario
+       session['user_id'] = user[0]['id']
+       return redirect(url_for('index'))
     return render_template('login.html')
+
+@app.route("/logout")
+def logout():
+    #Esquecer o id do usuario
+    session.clear()
+    # Voltar o usuario para tela inicial
+    return redirect(url_for('index'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
    #Limpar a sessao anterior
     session.clear()
-
     if request.method == "POST":
         #Obter os dados
         username = request.form.get('username')
@@ -45,7 +68,7 @@ def register():
         if user:
             return "O nome ja foi selecionado", 400
         #Adicionar dados para db
-        db.execute("INSERT INTO users (username, password) VALUES(?, ?)", username, hashed_password)
+        db.execute("INSERT INTO users (username, password, saldo) VALUES(?, ?, ?)", username, hashed_password, 100)
         return redirect(url_for('login'))
     else:
         return render_template("register.html")
