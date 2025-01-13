@@ -10,12 +10,8 @@ app.secret_key = os.urandom(24)
 db = SQL("sqlite:///tigrinho.db")
 
 @app.route('/')
-@login_required
 def index():
-    user_id = session['user_id']
-    user = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)
-    saldo = user[0]['saldo']
-    return render_template('index.html', saldo=saldo)
+    return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
