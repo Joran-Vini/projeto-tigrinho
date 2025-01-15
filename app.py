@@ -13,6 +13,36 @@ db = SQL("sqlite:///tigrinho.db")
 def index():
     return render_template('index.html')
 
+@app.route('/homepage', methods=['GET', 'POST'])
+@login_required
+def homepage():
+    user_id = session('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+   # Obter o saldo do usuário logado
+    user = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)
+    if not user:
+        return "Usuário não encontrado.", 404
+    saldo = user[0]["saldo"]
+    # Renderizar a página com o saldo
+    return render_template('homepage.html', saldo=saldo)
+
+@app.route('/add', methods=['GET', 'POST'])
+@login_required
+def add():
+    #Obter o id do usuario
+    user_id = session.get('user_id')
+    if request.method == 'POST':
+         #Obter a quantidade de fichas a serem adicionadas
+        fichas = request.form.get('fichas')
+        #Checar se é um valor possivel
+        if not fichas or not fichas.isdigit() or int(fichas) <= 0:
+            return "Por favor, insira um número válido de fichas.", 400
+    #Atualizar o saldo
+        db.execute("UPDATE users SET saldo = saldo + ? WHERE id = ?", int(fichas), user_id)
+        #Redirecionar usuario para homepage
+        return redirect(url_for('homepage'))
+    return render_template("add.html")
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     #Limpar os dados da sessão anterior
@@ -32,7 +62,7 @@ def login():
             return "Usuário ou senha inválidos!", 400
        #redirecionar usuario
        session['user_id'] = user[0]['id']
-       return redirect(url_for('index'))
+       return redirect(url_for('homepage'))
     return render_template('login.html')
 
 @app.route("/logout")

@@ -1,2 +1,14 @@
 @charset "UTF-8";
 
+ h1.register {
+    text-align: center;
+    padding-bottom:20px ;
+ }
+ .center-form {
+    display: flex;
+    flex-direction: column; /* Empilha os elementos verticalmente */
+    align-items: center;    /* Centraliza horizontalmente */
+    justify-content: center; /* Centraliza verticalmente */
+    height: 50vh;          /* Usa toda a altura da janela */
+    gap: 15px;              /* Espaçamento entre os elementos */
+}

@@ -4,15 +4,17 @@
     Registrar
 {% endblock %}
 {% block main %}
-<h1>Registre-se aqui!</h1>
-    <form action="/register" method="post">
-        <div class="mb-3">
-            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="username" placeholder="Nome:" type="text">
-        </div>
-        <div class="mb-3">
-            <input class="form-control mx-auto w-auto" name="password" placeholder="Senha:" type="password">
-        </div>
-        <div class="mb-3"><input class="form-control mx-auto w-auto" name="confirm" placeholder="Confirme a senha:" type="password"></div>
-        <button class="btn btn-primary" type="submit">Registrar</button>
-    </form>
+<div class="center-form">
+    <h1 class="register">Registre-se aqui!</h1>
+        <form action="/register" method="post">
+            <div class="mb-3">
+                <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="username" placeholder="Nome:" type="text">
+            </div>
+            <div class="mb-3">
+                <input class="form-control mx-auto w-auto" name="password" placeholder="Senha:" type="password">
+            </div>
+            <div class="mb-3"><input class="form-control mx-auto w-auto" name="confirm" placeholder="Confirme a senha:" type="password"></div>
+            <button class="btn btn-primary" type="submit">Registrar</button>
+        </form>
+</div>
 {% endblock %}
