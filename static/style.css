@@ -6,9 +6,32 @@
  }
  .center-form {
     display: flex;
-    flex-direction: column; /* Empilha os elementos verticalmente */
-    align-items: center;    /* Centraliza horizontalmente */
-    justify-content: center; /* Centraliza verticalmente */
-    height: 50vh;          /* Usa toda a altura da janela */
-    gap: 15px;              /* Espaçamento entre os elementos */
+    flex-direction: column; 
+    align-items: center;    
+    justify-content: center; 
+    height: 50vh;         
+    gap: 15px;     
+}
+.grid-container {
+   display: grid;
+   gap: 10px;
+   justify-content: center;
+}
+.grid-row {
+   display: flex;
+   justify-content: center;
+}
+.grid-cell {
+   font-size: 2.5rem;
+   margin: 5px;
+   padding: 10px;
+   border: 2px solid #ddd;
+   border-radius: 10px;
+   background-color: #f8f9fa;
+}
+.perdeu {
+   color: rgba(255, 0, 0, 0.692);
+}
+.ganhou {
+   color: rgba(0, 128, 0, 0.651);
 }

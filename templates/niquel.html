@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block title %}
+   Caça-Níqueis
+{% endblock %}
+{% block main %}
+<div class="container text-center">
+    <h1 class="my-4">Caça-Níquel</h1>
+    <p>Saldo Atual: {{ saldo }} fichas</p>
+    {% if message %}
+        <p class="{{ message_class}}">{{ message }}</p>
+    {% endif %}
+    {% if grid is defined %}
+        <div class="grid-container">
+            {% for row in grid %}
+                <div class="grid-row">
+                    {% for symbol in row %}
+                        <span class="grid-cell">{{ symbol }}</span>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Clique no botão para jogar!</p>
+    {% endif %}
+    <form action="/niquel" method="post">
+        <button class="btn btn-primary my-4" type="submit">Jogar</button>
+    </form>
+</div>
+{% endblock %}
