@@ -10,6 +10,9 @@ app.secret_key = os.urandom(24)
 
 db = SQL("sqlite:///tigrinho.db")
 
+# Baralho básico
+deck = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'] * 4
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -27,12 +30,59 @@ def homepage():
     # Renderizar a página com o saldo
     return render_template('homepage.html',username=username, saldo=saldo)
 
+def calculate_score(hand):
+    #Calcula o valor total de uma mão no blackjack
+    total = 0
+    aces = 0
+    for card in hand:
+        if card in ['J', 'Q', 'K']:
+            total += 10
+        elif card == 'A':
+            aces += 1
+            total += 11
+        else:
+            total += int(card)
+    # Ajustar valor dos Ases se ultrapassar 21
+    while total > 21 and aces:
+        total -= 10
+        aces -= 1
+    return total
+
 @app.route('/blackjack', methods=['GET', 'POST'])
 @login_required
 def blackjack():
-    user_id = session.get('user_id')
+   user_id = session.get('user_id')
+   if request.method == 'POST':
+       #Olhar qual escolha do user
+       action = request.form('action')
+       #Valor de cada aposta
+       bet = session.get('bet', 10)
+       #Pegar os valores de cada mão
+       player_hand = session('player_hand')
+       dealer_hand = session('dealer_hand')
+       deck = session('deck')
+       #Se pedir
+       if action == 'Pedir':
+            player_hand.append(deck.pop())
+            session['player_hand'] = player_hand
+            #Se passar de 21
+            if calculate_score(player_hand) > 21:
+                db.execute("UPDATE users SET saldo = saldo - ? WHERE id = ?", bet, user_id)
+                saldo = db.execute("SELECT * FROM users WHERE id = ?", user_id)[0]['saldo']
+                return render_template('blackjack.html', result="Você perdeu! Estourou 21.", dealer_hand=dealer_hand, player_hand=player_hand, saldo=saldo)
+            elif action == 'Parar':
+                 while calculate_score(dealer_hand) < 17:
+                     dealer_hand.append(deck.pop())
+                #Determinar vencedor
+                player_score = calculate_score(player_hand)
+                dealer_score = calculate_score(dealer_hand)
 
 
+   else:
+        return render_template("blackjack.html")
+
+
+    
 @app.route('/niquel', methods=['GET', 'POST'])
 @login_required
 def niquel():
