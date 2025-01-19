@@ -18,8 +18,6 @@ def index():
 @login_required
 def homepage():
     user_id = session.get('user_id')
-    if not user_id:
-        return redirect(url_for('login'))
    # Obter o saldo e nome do usuário logado
     user = db.execute("SELECT username, saldo FROM users WHERE id = ?", user_id)
     if not user:
@@ -29,23 +27,45 @@ def homepage():
     # Renderizar a página com o saldo
     return render_template('homepage.html',username=username, saldo=saldo)
 
+@app.route('/blackjack', methods=['GET', 'POST'])
+@login_required
+def blackjack():
+    user_id = session.get('user_id')
+
+
 @app.route('/niquel', methods=['GET', 'POST'])
 @login_required
 def niquel():
+   # Símbolos do caça-níqueis
+   symbols = ["🍒", "🍋", "⭐", "🔔", "🍀", "💎", "🍊"]
    user_id = session.get('user_id')
    saldo = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)[0]['saldo']
+   # Gerar os três slots 
+   grid = [[random.choice(symbols) for _ in range(3)] for _ in range(3)]
    if request.method == 'POST':
         if saldo < 10:
             return "Saldo não disponivel", 404        
-       # Símbolos do caça-níqueis
-        symbols = ["🍒", "🍋", "⭐", "🔔", "🍀"]
        # Gerar os três slots 
         grid = [[random.choice(symbols) for _ in range(3)] for _ in range(3)]
         #Checar resultado
         prize = 0
+        #Verificar Linhas
         for row in grid:
-            if row.count(row[0]) == 3:  # Todos os símbolos na linha são iguais
-                prize += 50
+            if row.count(row[0]) == 3:  
+                prize += 25
+        # Verificar colunas
+        for col in range(3):
+            column = [grid[row][col] for row in range(3)]
+            if len(set(column)) == 1:
+                prize += 10        
+        # Verificar diagonais
+        diagonal1 = [grid[i][i] for i in range(3)]
+        diagonal2 = [grid[i][2 - i] for i in range(3)]
+        if len(set(diagonal1)) == 1:
+            prize += 50
+        if len(set(diagonal2)) == 1:
+            prize += 100
+            #Checar derrota
         if prize == 0:
                 perda = 10
                 saldo -= perda
@@ -57,7 +77,7 @@ def niquel():
             message_class = "ganhou"
         db.execute("UPDATE users SET saldo = ? WHERE id = ?", saldo, user_id)
         return render_template('niquel.html', grid=grid, saldo=saldo, message=message, message_class=message_class)              
-   return render_template("niquel.html", saldo=saldo)
+   return render_template("niquel.html", saldo=saldo, grid=grid)
 
 @app.route('/add', methods=['GET', 'POST'])
 @login_required

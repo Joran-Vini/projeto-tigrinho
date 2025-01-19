@@ -20,7 +20,7 @@
                 </div>
             {% endfor %}
         </div>
-    
+    {% else %}
         <p>Clique no botão para jogar!</p>
     {% endif %}
     <form action="/niquel" method="post">
