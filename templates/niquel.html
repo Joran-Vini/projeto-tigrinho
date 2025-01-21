@@ -6,7 +6,7 @@
 {% block main %}
 <div class="container text-center">
     <h1 class="my-4">Caça-Níquel</h1>
-    <p>Saldo Atual: {{ saldo }} fichas</p>
+    <p>Saldo Atual: <strong>{{ saldo }}</strong> fichas</p>
     {% if message %}
         <p class="{{ message_class}}">{{ message }}</p>
     {% endif %}

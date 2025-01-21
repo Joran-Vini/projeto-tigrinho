@@ -55,6 +55,7 @@ def calculate_score_filter(hand):
 def blackjack():
     # Inicializar o jogo
     user_id = session['user_id']
+    saldo = db.execute("SELECT saldo from users WHERE id = ?", user_id)[0]['saldo']
     if request.method == 'GET' or 'deck' not in session:
         deck = create_deck()
         player_hand = [deck.pop(), deck.pop()]
@@ -68,17 +69,25 @@ def blackjack():
         dealer_hand = session['dealer_hand']
     # Jogador pediu uma carta
     if request.method == 'POST' and 'hit' in request.form:
+        if saldo < 10:
+            return "Saldo insuficiente", 404
         player_hand.append(deck.pop())
         session['player_hand'] = player_hand
         session['deck'] = deck
         if calculate_score(player_hand) > 21:
+            perda = 10 
+            saldo -= perda  
+            message_class = "perdeu"
+            db.execute("UPDATE users SET saldo = ?, perda = perda + ? WHERE id = ?", saldo, perda, user_id)
             return render_template('blackjack.html', 
                                    player_hand=player_hand, 
                                    dealer_hand=dealer_hand, 
                                    message="Você estourou! Fim de jogo.", 
-                                   game_over=True)
+                                   game_over=True, saldo=saldo, message_class=message_class)
     # Jogador decidiu parar
     if request.method == 'POST' and 'stand' in request.form:
+        if saldo < 10:
+            return "Saldo insuficiente", 404
         while calculate_score(dealer_hand) < 17:
             dealer_hand.append(deck.pop())
         session['dealer_hand'] = dealer_hand
@@ -86,19 +95,26 @@ def blackjack():
         dealer_score = calculate_score(dealer_hand)
         if dealer_score > 21 or player_score > dealer_score:
             message = "Você venceu!"
+            ganho = 10
+            saldo += ganho
+            message_class = "ganhou"
         elif player_score < dealer_score:
             message = "Você perdeu!"
+            perda = 10
+            saldo -= perda
+            message_class = "perdeu"
         else:
             message = "Empate!"
+        db.execute("UPDATE users SET saldo = ?, perda = perda + ?, ganho = ganho + ? WHERE id = ?", saldo, perda, ganho, user_id)    
         return render_template('blackjack.html', 
                                player_hand=player_hand, 
                                dealer_hand=dealer_hand, 
                                message=message, 
-                               game_over=True)
+                               game_over=True,saldo=saldo, message_class=message_class)
     return render_template('blackjack.html', 
                            player_hand=player_hand, 
                            dealer_hand=dealer_hand, 
-                           game_over=False)
+                           game_over=False, saldo=saldo)
     
 @app.route('/niquel', methods=['GET', 'POST'])
 @login_required
@@ -194,6 +210,13 @@ def logout():
     session.clear()
     # Voltar o usuario para tela inicial
     return redirect(url_for('index'))
+
+@app.route("/historico")
+@login_required
+def historico():
+    perda = db.execute("SELECT perda FROM users WHERE id = ?", user_id)[0]
+    return render_template("historico.html")
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
