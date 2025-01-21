@@ -6,18 +6,16 @@
 {% block main %}
 <div class="container text-center">
     <h1>Blackjack</h1>
-    <p>Saldo Atual: <strong>{{ saldo }} fichas</strong></p>
-    {% if result %}
-        <h2 class="{% if 'venceu' in result %}text-success{% else %}text-danger{% endif %}">{{ result }}</h2>
-    {% endif %}  
-    <div class="my-4">
-        <h3>Sua mão: {{ player_hand }}</h3>
-        <h3>Mão do Dealer: {{ dealer_hand }}</h3>
-    </div>  
-    {% if not result %}
-        <form method="POST">
-            <button type="submit" name="action" value="Pedir" class="btn btn-primary">Pedir</button>
-            <button type="submit" name="action" value="Parar" class="btn btn-success">Parar</button>
+    <p>Sua mão: {{ player_hand }} ({{ player_hand | calculate_score }})</p>
+    {% if game_over %}
+        <p>Mão do dealer: {{ dealer_hand }} ({{ dealer_hand | calculate_score }})</p>
+        <h2>{{ message }}</h2>
+        <a href="/blackjack" class="btn btn-primary">Jogar Novamente</a>
+    {% else %}
+        <p>Mão do dealer: [?, {{ dealer_hand[1] }}]</p>
+        <form method="post">
+            <button type="submit" name="hit" class="btn btn-success">Pedir Carta</button>
+            <button type="submit" name="stand" class="btn btn-danger">Parar</button>
         </form>
     {% endif %}
 </div>
