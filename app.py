@@ -98,14 +98,16 @@ def blackjack():
             ganho = 10
             saldo += ganho
             message_class = "ganhou"
+            db.execute("UPDATE users SET ganho = ? WHERE id = ?", ganho, user_id)
         elif player_score < dealer_score:
             message = "Você perdeu!"
             perda = 10
             saldo -= perda
             message_class = "perdeu"
+            db.execute("UPDATE users SET perda = ? WHERE id = ?", perda, user_id)
         else:
             message = "Empate!"
-        db.execute("UPDATE users SET saldo = ?, perda = perda + ?, ganho = ganho + ? WHERE id = ?", saldo, perda, ganho, user_id)    
+        db.execute("UPDATE users SET saldo = ? WHERE id = ?", saldo, user_id)    
         return render_template('blackjack.html', 
                                player_hand=player_hand, 
                                dealer_hand=dealer_hand, 
@@ -214,8 +216,10 @@ def logout():
 @app.route("/historico")
 @login_required
 def historico():
-    perda = db.execute("SELECT perda FROM users WHERE id = ?", user_id)[0]
-    return render_template("historico.html")
+    perda = db.execute("SELECT perda FROM users WHERE id = ?", user_id)[0]['perda']
+    ganho = db.execute("SELECT ganho FROM users WHERE id = ?", user_id)[0]['ganho']
+
+    return render_template("historico.html", perda=perda, ganho=ganho)
 
 
 @app.route('/register', methods=['GET', 'POST'])
