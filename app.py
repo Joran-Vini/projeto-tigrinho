@@ -125,7 +125,7 @@ def roleta():
     saldo = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)[0]['saldo']
     if request.method == 'POST':
          #Analisar os tipos de apostas
-         aposta = int(request.form.get('aposta'))
+         aposta = request.form.get('aposta')
          tipo_aposta = request.form.get('tipo_aposta')  
          valor_apostado = int(request.form.get('valor_apostado'))
          if valor_apostado > saldo:
@@ -136,20 +136,25 @@ def roleta():
          #Checar resultado
          final = False
          if tipo_aposta == "numero":
-             if int(aposta) ==  resultado:
+              if str(aposta).isdigit() and int(aposta) == resultado:
                 final = True
                 saldo += valor_apostado * 35
                 ganho = valor_apostado * 35
                 db.execute("UPDATE users SET ganhos = ganhos + ? WHERE id = ?", ganho, user_id)
-         elif tipo_aposta == "cor" and aposta == cor_resultado:
-             final = True
-             saldo += valor_apostado * 2
-             ganho = valor_apostado * 2
-             db.execute("UPDATE users SET ganhos = ganhos + ? WHERE id = ?", ganho, user_id)
-         else:
-             final = False
-             saldo -= valor_apostado
-             db.execute("UPDATE users SET perdas = perdas + ? WHERE id = ?", valor_apostado, user_id)                      
+              else:
+                 saldo -= valor_apostado
+                 perda = valor_apostado
+                 db.execute("UPDATE users SET perdas = perdas + ? WHERE id = ?", perda, user_id)        
+         elif tipo_aposta == "cor":
+             if aposta.lower() == cor_resultado:
+                final = True
+                saldo += valor_apostado * 2
+                ganho = valor_apostado * 2
+                db.execute("UPDATE users SET ganhos = ganhos + ? WHERE id = ?", ganho, user_id)
+             else:
+                saldo -= valor_apostado
+                perda = valor_apostado
+                db.execute("UPDATE users SET perdas = perdas + ? WHERE id = ?", perda, user_id)                      
          db.execute("UPDATE users SET saldo = ? WHERE id = ?", saldo, user_id)
          mensagem = f"Você ganhou! Resultado: {resultado} ({cor_resultado})" if final else f"Você perdeu! Resultado: {resultado} ({cor_resultado})"
          message_class = "ganhou" if final else "perdeu"
