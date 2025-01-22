@@ -78,7 +78,7 @@ def blackjack():
             perda = 10 
             saldo -= perda  
             message_class = "perdeu"
-            db.execute("UPDATE users SET saldo = ?, perdas = perda + ? WHERE id = ?", saldo, perda, user_id)
+            db.execute("UPDATE users SET saldo = ?, perdas = perdas + ? WHERE id = ?", saldo, perda, user_id)
             return render_template('blackjack.html', 
                                    player_hand=player_hand, 
                                    dealer_hand=dealer_hand, 
@@ -98,13 +98,13 @@ def blackjack():
             ganho = 10
             saldo += ganho
             message_class = "ganhou"
-            db.execute("UPDATE users SET ganhos = ? WHERE id = ?", ganho, user_id)
+            db.execute("UPDATE users SET ganhos = ganhos + ? WHERE id = ?", ganho, user_id)
         elif player_score < dealer_score:
             message = "Você perdeu!"
             perda = 10
             saldo -= perda
             message_class = "perdeu"
-            db.execute("UPDATE users SET perdas = ? WHERE id = ?", perda, user_id)
+            db.execute("UPDATE users SET perdas = perdas + ? WHERE id = ?", perda, user_id)
         else:
             message = "Empate!"
         db.execute("UPDATE users SET saldo = ? WHERE id = ?", saldo, user_id)    
@@ -117,7 +117,46 @@ def blackjack():
                            player_hand=player_hand, 
                            dealer_hand=dealer_hand, 
                            game_over=False, saldo=saldo)
-    
+
+@app.route('/roleta', methods=['GET', 'POST'])
+@login_required
+def roleta():
+    user_id = session['user_id']
+    saldo = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)[0]['saldo']
+    if request.method == 'POST':
+         #Analisar os tipos de apostas
+         aposta = int(request.form.get('aposta'))
+         tipo_aposta = request.form.get('tipo_aposta')  
+         valor_apostado = int(request.form.get('valor_apostado'))
+         if valor_apostado > saldo:
+             return "Saldo insuficiente", 404
+         #Simular a roleta
+         resultado = random.randint(0, 36)
+         cor_resultado = "verde" if resultado == 0 else ("vermelho" if resultado % 2 == 0 else "preto")
+         #Checar resultado
+         final = False
+         if tipo_aposta == "numero":
+             if int(aposta) ==  resultado:
+                final = True
+                saldo += valor_apostado * 35
+                ganho = valor_apostado * 35
+                db.execute("UPDATE users SET ganhos = ganhos + ? WHERE id = ?", ganho, user_id)
+         elif tipo_aposta == "cor" and aposta == cor_resultado:
+             final = True
+             saldo += valor_apostado * 2
+             ganho = valor_apostado * 2
+             db.execute("UPDATE users SET ganhos = ganhos + ? WHERE id = ?", ganho, user_id)
+         else:
+             final = False
+             saldo -= valor_apostado
+             db.execute("UPDATE users SET perdas = perdas + ? WHERE id = ?", valor_apostado, user_id)                      
+         db.execute("UPDATE users SET saldo = ? WHERE id = ?", saldo, user_id)
+         mensagem = f"Você ganhou! Resultado: {resultado} ({cor_resultado})" if final else f"Você perdeu! Resultado: {resultado} ({cor_resultado})"
+         message_class = "ganhou" if final else "perdeu"
+         return render_template('roleta.html', saldo=saldo, mensagem=mensagem, message_class=message_class)
+             
+    return render_template('roleta.html', saldo=saldo)
+
 @app.route('/niquel', methods=['GET', 'POST'])
 @login_required
 def niquel():
@@ -156,11 +195,12 @@ def niquel():
                 saldo -= perda
                 message = f"Você perdeu {perda} fichas."  
                 message_class = "perdeu"
+                db.execute("UPDATE users SET perdas = perdas + ? WHERE id = ?", perda, user_id)
         else:
             saldo += prize
             message = f"Você ganhou {prize} fichas! Parabéns!"    
             message_class = "ganhou"
-        db.execute("UPDATE users SET saldo = ? WHERE id = ?", saldo, user_id)
+        db.execute("UPDATE users SET saldo = ?, ganhos = ganhos + ? WHERE id = ?", saldo, prize, user_id)
         return render_template('niquel.html', grid=grid, saldo=saldo, message=message, message_class=message_class)              
    return render_template("niquel.html", saldo=saldo, grid=grid)
 
@@ -219,8 +259,16 @@ def historico():
     user_id = session.get('user_id')
     perdas = db.execute("SELECT perdas FROM users WHERE id = ?", user_id)[0]['perdas']
     ganhos = db.execute("SELECT ganhos FROM users WHERE id = ?", user_id)[0]['ganhos']
-
-    return render_template("historico.html", perdas=perdas, ganhos=ganhos)
+    if ganhos > perdas:
+        total = ganhos - perdas
+        message_class = "ganhou"
+    elif perdas > ganhos:
+        total = perdas - ganhos
+        message_class = "perdeu"
+    else:
+        total = 0
+        message_class = "perdeu"        
+    return render_template("historico.html", perdas=perdas, ganhos=ganhos, total=total, message_class=message_class)
 
 
 @app.route('/register', methods=['GET', 'POST'])

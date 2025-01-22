@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+
+{% block title %}
+ Roleta
+{% endblock %}
+{% block main %}
+<div class="container text-center">
+    <h1 class="my-4">Roleta</h1>
+    <p>Seu saldo atual: <strong>{{ saldo }}</strong> fichas</p>
+    
+    {% if mensagem %}
+    <div class="message_class">
+        {{ mensagem }}
+    </div>
+    {% endif %}
+    <form method="POST">
+        <div class="mb-3">
+            <label for="tipo_aposta" class="form-label">Tipo de Aposta:</label>
+            <select id="tipo_aposta" name="tipo_aposta" class="form-select" required>
+                <option value="numero">Número (0-36)</option>
+                <option value="cor">Cor (vermelho/preto)</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="aposta" class="form-label">Sua Aposta:</label>
+            <input type="text" id="aposta" name="aposta" class="form-control" placeholder="Digite o número ou cor" required>
+        </div>
+        <div class="mb-3">
+            <label for="valor_apostado" class="form-label">Valor Apostado:</label>
+            <input type="number" id="valor_apostado" name="valor_apostado" class="form-control" min="1" max="{{ saldo }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Girar a Roleta</button>
+    </form>
+</div>
+{% endblock %}
