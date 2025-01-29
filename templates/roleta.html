@@ -1,35 +1,64 @@
 {% extends "layout.html" %}
 
-{% block title %}
- Roleta
-{% endblock %}
 {% block main %}
-<div class="container text-center">
-    <h1 class="my-4">Roleta</h1>
-    <p>Seu saldo atual: <strong>{{ saldo }}</strong> fichas</p>
-    
-    {% if mensagem %}
-    <div class="message_class">
-        {{ mensagem }}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white text-center">
+                <h2>Roleta</h2>
+            </div>
+            <div class="card-body">
+                <h4 class="text-center mb-4">Saldo: <span class="badge bg-success">{{ saldo }}</span> fichas</h4>
+                
+                {% if mensagem %}
+                    <div class="alert {% if message_class == 'ganhou' %}alert-success{% else %}alert-danger{% endif %}" role="alert">
+                        {{ mensagem }}
+                    </div>
+                {% endif %}
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="tipo_aposta" class="form-label">Tipo de Aposta</label>
+                        <select id="tipo_aposta" name="tipo_aposta" class="form-select" required>
+                            <option value="numero">Número</option>
+                            <option value="cor">Cor</option>
+                            <option value="par_impar">Par/Ímpar</option>
+                            <option value="baixo_alto">Baixo/Alto</option>
+                        </select>
+                    </div>
+                    <div class="row justify-content-center mt-5">
+                        <div class="col-md-6 text-center">
+                            <div class="roulette-container">
+                                <div id="wheel">
+                                    {% set numeros = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26] %}
+                                    {% set angulo = 360 / numeros|length %}
+                                    {% for i in range(numeros|length) %}
+                                        <div class="sector" style="transform: rotate({{ i * angulo }}deg);">
+                                            <span style="transform: rotate(-{{ i * angulo }}deg);">{{ numeros[i] }}</span>
+                                        </div>
+                                    {% endfor %}
+                                    <div id="center"></div>
+                                </div>
+                                <div id="pointer"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="aposta" class="form-label">Escolha (Número/Cor)</label>
+                        <input type="text" id="aposta" name="aposta" class="form-control" placeholder="Ex.: 7 ou vermelho" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="valor_apostado" class="form-label">Valor Apostado</label>
+                        <input type="number" id="valor_apostado" name="valor_apostado" class="form-control" min="1" placeholder="Ex.: 100" required>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Apostar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-    {% endif %}
-    <form method="POST">
-        <div class="mb-3">
-            <label for="tipo_aposta" class="form-label">Tipo de Aposta:</label>
-            <select id="tipo_aposta" name="tipo_aposta" class="form-select" required>
-                <option value="numero">Número (0-36)</option>
-                <option value="cor">Cor (vermelho/preto)</option>
-            </select>
-        </div>
-        <div class="mb-3">
-            <label for="aposta" class="form-label">Sua Aposta:</label>
-            <input type="text" id="aposta" name="aposta" class="form-control" placeholder="Digite o número ou cor" required>
-        </div>
-        <div class="mb-3">
-            <label for="valor_apostado" class="form-label">Valor Apostado:</label>
-            <input type="number" id="valor_apostado" name="valor_apostado" class="form-control" min="1" max="{{ saldo }}" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Girar a Roleta</button>
-    </form>
 </div>
 {% endblock %}

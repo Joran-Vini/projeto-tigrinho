@@ -35,3 +35,82 @@
 .ganhou {
    color: rgba(0, 128, 0, 0.651);
 }
+.empatou {
+   color: rgba(255, 255, 0, 0.692);
+}
+.roulette-container {
+   position: relative;
+   width: 300px;
+   height: 300px;
+   margin: 0 auto;
+}
+
+#wheel {
+   position: relative;
+   width: 100%;
+   height: 100%;
+   border-radius: 50%;
+   background: #228B22;
+   border: 5px solid #000;
+   overflow: hidden;
+}
+
+.sector {
+   position: absolute;
+   width: 50%;
+   height: 50%;
+   top: 0;
+   left: 50%;
+   transform-origin: left bottom;
+   clip-path: polygon(0% 100%, 100% 100%, 50% 0%);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-weight: bold;
+   font-size: 16px;
+}
+
+.sector:nth-child(even) {
+   background: black;
+}
+
+.sector:nth-child(odd) {
+   background: red;
+}
+
+.sector span {
+   position: absolute;
+   top: 20%;
+   left: 50%;
+   transform: translateX(-50%) rotate(-90deg);
+   font-size: 16px;
+   font-weight: bold;
+   color: white;
+}
+
+#center {
+   position: absolute;
+   top: 50%;
+   left: 50%;
+   transform: translate(-50%, -50%);
+   width: 40px;
+   height: 40px;
+   background: gold;
+   border: 3px solid black;
+   border-radius: 50%;
+   z-index: 5;
+   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+#pointer {
+   position: absolute;
+   top: -10px;
+   left: 50%;
+   transform: translateX(-50%);
+   width: 20px;
+   height: 20px;
+   border-radius: 50%;
+   background: red;
+   border: 3px solid black;
+   z-index: 10;
+}

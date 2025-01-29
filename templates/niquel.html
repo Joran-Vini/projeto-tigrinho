@@ -3,28 +3,55 @@
 {% block title %}
    Caça-Níqueis
 {% endblock %}
+
 {% block main %}
 <div class="container text-center">
     <h1 class="my-4">Caça-Níquel</h1>
-    <p>Saldo Atual: <strong>{{ saldo }}</strong> fichas</p>
+    <p>Saldo Atual: <strong id="saldo">{{ saldo }}</strong> fichas</p>
+
     {% if message %}
-        <p class="{{ message_class}}">{{ message }}</p>
+        <p class="{{ message_class}}" id="message">{{ message }}</p>
     {% endif %}
-    {% if grid is defined %}
-        <div class="grid-container">
-            {% for row in grid %}
-                <div class="grid-row">
-                    {% for symbol in row %}
-                        <span class="grid-cell">{{ symbol }}</span>
-                    {% endfor %}
-                </div>
-            {% endfor %}
-        </div>
-    
-        <p>Clique no botão para jogar!</p>
-    {% endif %}
-    <form action="/niquel" method="post">
-        <button class="btn btn-primary my-4" type="submit">Jogar</button>
+
+    <div class="grid-container">
+        {% for row in grid %}
+            <div class="grid-row">
+                {% for symbol in row %}
+                    <span class="grid-cell">{{ symbol }}</span>  <!-- Sem a classe "rolling" no início -->
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <p id="instrucoes">Clique no botão para jogar!</p>
+
+    <form id="niquel-form" action="/niquel" method="post">
+        <button class="btn btn-primary my-4" type="submit" id="play-button">Jogar</button>
     </form>
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("niquel-form");
+        const button = document.getElementById("play-button");
+        const symbols = ["🍒", "🍋", "⭐", "🔔", "🍀", "💎", "🍊"];
+        const cells = document.querySelectorAll(".grid-cell");
+
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();  // Impede o envio imediato do formulário
+            
+            let interval = setInterval(() => {
+                cells.forEach(cell => {
+                    cell.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                });
+            }, 100);  // Troca os símbolos rapidamente
+
+            // Para a animação após 2 segundos e envia o formulário
+            setTimeout(() => {
+                clearInterval(interval);
+                form.submit();  // Agora o formulário é enviado
+            }, 2000);
+        });
+    });
+</script>
+
 {% endblock %}
