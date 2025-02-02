@@ -125,7 +125,7 @@ def roleta():
     user_id = session.get('user_id')
     saldo = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)[0]["saldo"]
 
-    # Definir sequência da roleta: número e cor
+    # Lista de números e cores (2 elementos por tupla)
     roleta_sequence = [
         (0, 'verde'),
         (32, 'vermelho'), (15, 'preto'), (19, 'vermelho'), (4, 'preto'),
@@ -140,52 +140,52 @@ def roleta():
     ]
 
     if request.method == 'POST':
-        # Obter valores do formulário
-        tipo_aposta = request.form.get('tipo_aposta')  # "numero", "cor", etc.
-        aposta = request.form.get('aposta')  # Número ou cor escolhida
-        valor_apostado = int(request.form.get('valor_apostado'))  # Quantidade apostada
+        tipo_aposta = request.form.get('tipo_aposta')
+        aposta = request.form.get('aposta')
+        valor_apostado = int(request.form.get('valor_apostado'))
 
-        # Checar se saldo é suficiente
+        # Verificar saldo
         if valor_apostado > saldo:
             flash("Saldo insuficiente.", "error")
             return redirect(url_for('roleta'))
 
-        # Gira a roleta
+        # Sortear resultado (2 elementos: número e cor)
         resultado = random.choice(roleta_sequence)
-        numero_resultado, cor_resultado = resultado
+        numero_sorteado, cor_resultado = resultado  
 
-        # Lógica de vitória/perda
+        # Lógica de apostas 
         ganho = 0
         if tipo_aposta == "numero" and aposta.isdigit():
-            if int(aposta) == numero_resultado:
+            if int(aposta) == numero_sorteado:
                 ganho = valor_apostado * 35
         elif tipo_aposta == "cor":
             if aposta.lower() == cor_resultado:
-                ganho = valor_apostado * 2
+                ganho = valor_apostado 
         elif tipo_aposta == "par_impar":
-            if (numero_resultado % 2 == 0 and aposta.lower() == "par") or \
-               (numero_resultado % 2 != 0 and aposta.lower() == "ímpar"):
-                ganho = valor_apostado * 2
+            if (numero_sorteado % 2 == 0 and aposta.lower() == "par") or \
+               (numero_sorteado % 2 != 0 and aposta.lower() == "ímpar"):
+                ganho = valor_apostado 
         elif tipo_aposta == "baixo_alto":
-            if (1 <= numero_resultado <= 18 and aposta.lower() == "baixo") or \
-               (19 <= numero_resultado <= 36 and aposta.lower() == "alto"):
-                ganho = valor_apostado * 2
-
+            if (1 <= numero_sorteado <= 18 and aposta.lower() == "baixo") or \
+               (19 <= numero_sorteado <= 36 and aposta.lower() == "alto"):
+                ganho = valor_apostado 
         # Atualizar saldo
         if ganho > 0:
             saldo += ganho
-            mensagem = f"Você ganhou {ganho} fichas! Resultado: {numero_resultado} ({cor_resultado})."
+            mensagem = f"Você ganhou {ganho} fichas! Resultado: {numero_sorteado} ({cor_resultado})."
             message_class = "ganhou"
-            db.execute("UPDATE users SET ganhos = ganhos + ?, saldo = ? WHERE id = ?", ganho, saldo, user_id)
         else:
             saldo -= valor_apostado
-            mensagem = f"Você perdeu {valor_apostado} fichas. Resultado: {numero_resultado} ({cor_resultado})."
+            mensagem = f"Você perdeu {valor_apostado} fichas. Resultado: {numero_sorteado} ({cor_resultado})."
             message_class = "perdeu"
-            db.execute("UPDATE users SET perdas = perdas + ?, saldo = ? WHERE id = ?", valor_apostado, saldo, user_id)
 
-        return render_template('roleta.html', saldo=saldo, mensagem=mensagem, message_class=message_class, resultado=numero_resultado, cor_resultado=cor_resultado)
+        # Atualizar banco de dados
+        db.execute("UPDATE users SET saldo = ?, ganhos = ganhos + ?, perdas = perdas + ? WHERE id = ?",
+                   saldo, ganho, valor_apostado if ganho == 0 else 0, user_id)
 
-    return render_template('roleta.html', saldo=saldo, roleta_sequence=roleta_sequence)
+        return render_template('roleta.html', saldo=saldo, mensagem=mensagem, message_class=message_class, numero_sorteado=numero_sorteado, mostrar_resultado=False)
+
+    return render_template('roleta.html', saldo=saldo)
 
 @app.route('/niquel', methods=['GET', 'POST'])
 @login_required

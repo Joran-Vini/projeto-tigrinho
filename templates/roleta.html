@@ -1,64 +1,230 @@
 {% extends "layout.html" %}
 
+{% block title %}
+   Roleta 
+{% endblock %}
+
 {% block main %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow-lg">
-            <div class="card-header bg-primary text-white text-center">
-                <h2>Roleta</h2>
-            </div>
-            <div class="card-body">
-                <h4 class="text-center mb-4">Saldo: <span class="badge bg-success">{{ saldo }}</span> fichas</h4>
-                
-                {% if mensagem %}
-                    <div class="alert {% if message_class == 'ganhou' %}alert-success{% else %}alert-danger{% endif %}" role="alert">
-                        {{ mensagem }}
-                    </div>
-                {% endif %}
-                
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="tipo_aposta" class="form-label">Tipo de Aposta</label>
-                        <select id="tipo_aposta" name="tipo_aposta" class="form-select" required>
-                            <option value="numero">Número</option>
-                            <option value="cor">Cor</option>
-                            <option value="par_impar">Par/Ímpar</option>
-                            <option value="baixo_alto">Baixo/Alto</option>
-                        </select>
-                    </div>
-                    <div class="row justify-content-center mt-5">
-                        <div class="col-md-6 text-center">
-                            <div class="roulette-container">
-                                <div id="wheel">
-                                    {% set numeros = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26] %}
-                                    {% set angulo = 360 / numeros|length %}
-                                    {% for i in range(numeros|length) %}
-                                        <div class="sector" style="transform: rotate({{ i * angulo }}deg);">
-                                            <span style="transform: rotate(-{{ i * angulo }}deg);">{{ numeros[i] }}</span>
-                                        </div>
-                                    {% endfor %}
-                                    <div id="center"></div>
-                                </div>
-                                <div id="pointer"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="aposta" class="form-label">Escolha (Número/Cor)</label>
-                        <input type="text" id="aposta" name="aposta" class="form-control" placeholder="Ex.: 7 ou vermelho" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="valor_apostado" class="form-label">Valor Apostado</label>
-                        <input type="number" id="valor_apostado" name="valor_apostado" class="form-control" min="1" placeholder="Ex.: 100" required>
-                    </div>
-                    
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">Apostar</button>
-                    </div>
-                </form>
+<div class="container text-center">
+    <h1 class="my-4">Roleta</h1>
+    <p>Saldo Atual: <strong>{{ saldo }}</strong> fichas</p>
+
+    <!-- Mensagem de resultado (escondida inicialmente) -->
+    {% if numero_sorteado is defined %}
+        <div id="mensagem-resultado" style="display: none;">
+            <div class="alert {% if message_class == 'ganhou' %}alert-success{% else %}alert-danger{% endif %}" role="alert">
+                {{ mensagem }}
             </div>
         </div>
+    {% endif %}
+
+    <!-- Contêiner da roleta -->
+    <div class="roleta-container">
+        <div class="ponteiro"></div> 
+        <div class="roleta" id="roleta">
+            {% for _ in range(4) %}  <!-- 4 cópias dos números para criar um loop infinito -->
+                <div class="slot zero">0</div>
+                {% for numero in range(1, 37) %}
+                    <div class="slot {% if numero % 2 == 0 %} preto {% else %} vermelho {% endif %}">{{ numero }}</div>
+                {% endfor %}
+            {% endfor %}
+        </div>
     </div>
+
+    <!-- Formulário de aposta -->
+    <form method="POST" class="my-4" id="formAposta">
+        <div class="mb-3">
+            <label for="tipo_aposta" class="form-label">Tipo de Aposta</label>
+            <select id="tipo_aposta" name="tipo_aposta" class="form-select" required>
+                <option value="numero">Número</option>
+                <option value="cor">Cor</option>
+                <option value="par_impar">Par/Ímpar</option>
+                <option value="baixo_alto">Baixo/Alto</option>
+            </select>
+        </div>
+
+        <!-- Campo dinâmico para escolha da aposta -->
+        <div class="mb-3" id="campoAposta">
+            <label for="aposta" class="form-label">Escolha</label>
+            <input type="text" id="aposta" name="aposta" class="form-control" placeholder="Ex.: 7" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="valor_apostado" class="form-label">Valor Apostado</label>
+            <input type="number" id="valor_apostado" name="valor_apostado" class="form-control" min="1" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg">Girar Roleta</button>
+    </form>
 </div>
+
+<!-- Estilos CSS -->
+<style>
+    .roleta-container {
+        width: 80%;
+        overflow: hidden;
+        border: 2px solid #000;
+        margin: 20px auto;
+        position: relative;
+        height: 80px;
+    }
+
+    .roleta {
+        display: flex;
+        gap: 10px;
+        padding: 10px;
+        position: relative;
+        white-space: nowrap;
+        width: max-content;
+    }
+
+    .slot {
+        width: 60px;
+        height: 60px;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: bold;
+        border-radius: 10px;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+    }
+
+    .zero {
+        background: green;
+    }
+
+    .vermelho {
+        background: red;
+    }
+
+    .preto {
+        background: black;
+    }
+
+    .ponteiro {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 4px;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 10;
+    }
+</style>
+
+<!-- Script JavaScript -->
+<script>
+    // Função para atualizar o campo de aposta com base no tipo selecionado
+    function atualizarCampoAposta() {
+        const tipoAposta = document.getElementById("tipo_aposta").value;
+        const campoAposta = document.getElementById("campoAposta");
+
+        let html = '';
+
+        switch (tipoAposta) {
+            case "numero":
+                html = `
+                    <label for="aposta" class="form-label">Escolha um número (0-36)</label>
+                    <input type="number" id="aposta" name="aposta" class="form-control" min="0" max="36" required>
+                `;
+                break;
+            case "cor":
+                html = `
+                    <label for="aposta" class="form-label">Escolha uma cor</label>
+                    <select id="aposta" name="aposta" class="form-select" required>
+                        <option value="vermelho">Vermelho</option>
+                        <option value="preto">Preto</option>
+                        <option value="verde">Verde</option>
+                    </select>
+                `;
+                break;
+            case "par_impar":
+                html = `
+                    <label for="aposta" class="form-label">Escolha</label>
+                    <select id="aposta" name="aposta" class="form-select" required>
+                        <option value="par">Par</option>
+                        <option value="ímpar">Ímpar</option>
+                    </select>
+                `;
+                break;
+            case "baixo_alto":
+                html = `
+                    <label for="aposta" class="form-label">Escolha</label>
+                    <select id="aposta" name="aposta" class="form-select" required>
+                        <option value="baixo">Baixo (1-18)</option>
+                        <option value="alto">Alto (19-36)</option>
+                    </select>
+                `;
+                break;
+        }
+
+        campoAposta.innerHTML = html;
+    }
+
+    // Atualizar o campo de aposta ao mudar o tipo de aposta
+    document.getElementById("tipo_aposta").addEventListener("change", atualizarCampoAposta);
+
+    // Inicializar o campo de aposta ao carregar a página
+    atualizarCampoAposta();
+
+    // Lógica de envio do formulário
+    document.getElementById("formAposta").addEventListener("submit", function(e) {
+        e.preventDefault(); // Impede o envio imediato do formulário
+
+        // Captura os dados do formulário
+        const formData = new FormData(this);
+
+        // Envia a aposta para o servidor via AJAX/Fetch
+        fetch(window.location.href, {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.text())
+        .then(html => {
+            // Atualiza a página com a resposta do servidor
+            document.open();
+            document.write(html);
+            document.close();
+        });
+    });
+
+    // Função para girar a roleta
+    function girarRoleta(numeroSorteado) {
+        const roleta = document.getElementById("roleta");
+        const slots = document.querySelectorAll(".slot");
+        const larguraCelula = slots[0].getBoundingClientRect().width + 10;
+        const numSlots = 37; // 0-36
+        const voltas = 3;
+
+        // Encontrar posição do número sorteado
+        let posicaoFinal = 0;
+        slots.forEach((slot, index) => {
+            if (slot.innerText.trim() == numeroSorteado) {
+                posicaoFinal = index * larguraCelula;
+            }
+        });
+
+        // Calcular deslocamento ajustado
+        const larguraTotal = roleta.scrollWidth;
+        const deslocamento = -((voltas * numSlots * larguraCelula) + posicaoFinal) % larguraTotal;
+
+        // Aplicar animação
+        roleta.style.transition = "transform 4s ease-out";
+        roleta.style.transform = `translateX(${deslocamento}px)`;
+
+        // Mostrar resultado após animação
+        setTimeout(() => {
+            document.getElementById("mensagem-resultado").style.display = "block";
+        }, 4000);
+    }
+
+    // Iniciar animação se houver número sorteado
+    {% if numero_sorteado is defined %}
+        girarRoleta({{ numero_sorteado }});
+    {% endif %}
+</script>
+
 {% endblock %}
