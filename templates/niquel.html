@@ -1,57 +1,89 @@
 {% extends "layout.html" %}
 
-{% block title %}
-   Caça-Níqueis
-{% endblock %}
+{% block title %}Caça-Níqueis{% endblock %}
 
 {% block main %}
 <div class="container text-center">
     <h1 class="my-4">Caça-Níquel</h1>
-    <p>Saldo Atual: <strong id="saldo">{{ saldo }}</strong> fichas</p>
+    <p>Saldo Atual: <strong id="saldo">{{ saldo }} fichas</strong></p>
 
     {% if message %}
-        <p class="{{ message_class}}" id="message">{{ message }}</p>
+        <div class="alert alert-{{ 'success' if message_class == 'ganhou' else 'danger' }}">
+            {{ message }}
+        </div>
     {% endif %}
 
-    <div class="grid-container">
+    <div class="slot-machine">
         {% for row in grid %}
-            <div class="grid-row">
+            <div class="slot-row">
                 {% for symbol in row %}
-                    <span class="grid-cell">{{ symbol }}</span>  <!-- Sem a classe "rolling" no início -->
+                    <div class="slot">{{ symbol }}</div>
                 {% endfor %}
             </div>
         {% endfor %}
     </div>
 
-    <p id="instrucoes">Clique no botão para jogar!</p>
-
     <form id="niquel-form" action="/niquel" method="post">
-        <button class="btn btn-primary my-4" type="submit" id="play-button">Jogar</button>
+        <div class="form-group my-3">
+            <label for="aposta">Valor da Aposta:</label>
+            <input type="number" class="form-control" id="aposta" name="aposta" 
+                   min="1" step="0.01" max="{{ saldo }}" required>
+        </div>
+        <button class="btn btn-primary my-4" type="submit">Jogar</button>
     </form>
 </div>
+
+<style>
+    .slot-machine {
+        border: 3px solid #333;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px auto;
+        max-width: 400px;
+        background: #f8f9fa;
+    }
+    .slot-row {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 10px 0;
+    }
+    .slot {
+        font-size: 2.5em;
+        padding: 15px;
+        border: 2px solid #dee2e6;
+        border-radius: 5px;
+        min-width: 60px;
+        background: white;
+    }
+</style>
+
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const form = document.getElementById("niquel-form");
-        const button = document.getElementById("play-button");
-        const symbols = ["🍒", "🍋", "⭐", "🔔", "🍀", "💎", "🍊"];
-        const cells = document.querySelectorAll(".grid-cell");
+    document.getElementById('niquel-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const button = this.querySelector('button');
+        const slots = document.querySelectorAll('.slot');
+        const symbols = ["🍒", "🍋", "⭐", "🔔", "🍀", "💎"];
+        
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Girando...';
 
-        form.addEventListener("submit", function (event) {
-            event.preventDefault();  // Impede o envio imediato do formulário
+        let count = 0;
+        const animate = () => {
+            slots.forEach(slot => {
+                slot.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+            });
             
-            let interval = setInterval(() => {
-                cells.forEach(cell => {
-                    cell.textContent = symbols[Math.floor(Math.random() * symbols.length)];
-                });
-            }, 100);  // Troca os símbolos rapidamente
-
-            // Para a animação após 2 segundos e envia o formulário
-            setTimeout(() => {
-                clearInterval(interval);
-                form.submit();  // Agora o formulário é enviado
-            }, 2000);
-        });
+            if(count++ < 20) {
+                setTimeout(animate, 50 + (count * 10));
+            } else {
+                button.disabled = false;
+                button.textContent = 'Jogar';
+                this.submit();
+            }
+        };
+        
+        animate();
     });
 </script>
-
 {% endblock %}
