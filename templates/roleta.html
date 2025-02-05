@@ -1,12 +1,10 @@
 {% extends "layout.html" %}
 
-{% block title %}
-   Roleta 
-{% endblock %}
+{% block title %}Roleta{% endblock %}
 
 {% block main %}
 <div class="container text-center">
-    <h1 class="my-4">Roleta</h1>
+    <h1 class="my-4">Double</h1>
     
     <p id="saldo-container">
         Saldo Atual: <strong id="saldo">{{ saldo }}</strong> fichas
@@ -17,51 +15,12 @@
     </div>
 
     <div class="roleta-container">
-        <div class="ponteiro"></div>
-        <div class="roleta-track">
-            <div class="roleta" id="roleta">
-                <!-- 3 cópias da sequência oficial -->
-                {% for _ in range(3) %}
-                    <div class="slot zero">0</div>
-                    <div class="slot preto">32</div>
-                    <div class="slot vermelho">15</div>
-                    <div class="slot preto">19</div>
-                    <div class="slot vermelho">4</div>
-                    <div class="slot preto">21</div>
-                    <div class="slot vermelho">2</div>
-                    <div class="slot preto">25</div>
-                    <div class="slot vermelho">17</div>
-                    <div class="slot preto">34</div>
-                    <div class="slot vermelho">6</div>
-                    <div class="slot preto">27</div>
-                    <div class="slot vermelho">13</div>
-                    <div class="slot preto">36</div>
-                    <div class="slot vermelho">11</div>
-                    <div class="slot preto">30</div>
-                    <div class="slot vermelho">8</div>
-                    <div class="slot preto">23</div>
-                    <div class="slot vermelho">10</div>
-                    <div class="slot preto">5</div>
-                    <div class="slot vermelho">24</div>
-                    <div class="slot preto">16</div>
-                    <div class="slot vermelho">33</div>
-                    <div class="slot preto">1</div>
-                    <div class="slot vermelho">20</div>
-                    <div class="slot preto">14</div>
-                    <div class="slot vermelho">31</div>
-                    <div class="slot preto">9</div>
-                    <div class="slot vermelho">22</div>
-                    <div class="slot preto">18</div>
-                    <div class="slot vermelho">29</div>
-                    <div class="slot preto">7</div>
-                    <div class="slot vermelho">28</div>
-                    <div class="slot preto">12</div>
-                    <div class="slot vermelho">35</div>
-                    <div class="slot preto">3</div>
-                    <div class="slot vermelho">26</div>
-                {% endfor %}
+        <div class="roleta-track" id="roletaTrack">
+            <div class="roleta-numbers" id="roletaNumbers">
+                <!-- Números gerados dinamicamente -->
             </div>
         </div>
+        <div class="roleta-pointer"></div>
     </div>
 
     <form method="POST" class="my-4" id="formAposta">
@@ -86,77 +45,123 @@
                    class="form-control" min="1" required>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-lg" id="btn-girar">Girar Roleta</button>
+        <button type="submit" class="btn btn-primary btn-lg" id="btn-girar">Girar</button>
     </form>
 </div>
 
 <style>
     .roleta-container {
-        width: 100%;
-        max-width: 800px;
-        margin: 2rem auto;
-        height: 100px;
-        overflow: hidden;
         position: relative;
-        border: 3px solid #333;
-        border-radius: 10px;
-        background: #2c3e50;
+        width: 800px;
+        margin: 2rem auto;
+        overflow: hidden;
     }
 
     .roleta-track {
-        position: absolute;
-        width: 100%;
-        height: 100%;
+        position: relative;
+        height: 100px;
+        background: #1a1a1a;
+        border-radius: 8px;
         overflow: hidden;
     }
 
-    .roleta {
+    .roleta-numbers {
         display: flex;
-        gap: 15px;
-        padding: 15px;
         position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        will-change: transform;
+        left: 0;
+        height: 100%;
+        transition: transform 4s cubic-bezier(0.33, 0, 0.67, 1);
     }
 
-    .slot {
+    .roleta-number {
         width: 80px;
-        height: 80px;
+        height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24px;
         font-weight: bold;
-        border-radius: 10px;
+        font-size: 1.2rem;
         color: white;
         flex-shrink: 0;
-        box-shadow: 3px 3px 8px rgba(0,0,0,0.3);
+        border-right: 2px solid #333;
     }
 
-    .zero { background: #27ae60; }
-    .vermelho { background: #e74c3c; }
-    .preto { background: #212529; }
-
-    .ponteiro {
+    .roleta-pointer {
         position: absolute;
         top: 0;
         left: 50%;
-        transform: translateX(-50%);
-        width: 6px;
+        width: 4px;
         height: 100%;
         background: #f1c40f;
-        z-index: 2;
         box-shadow: 0 0 15px #f1c40f;
+        z-index: 2;
+        transform: translateX(-50%);
     }
+
+    .red { background: #e74c3c; }
+    .black { background: #212529; }
 </style>
 
 <script>
-    // Sistema de Animação Atualizado
-    const VOLTAS = 3;
-    const SLOTS_POR_COPIA = 37;
-    const COPIAS = 3;
+    const NUMEROS = [
+        { numero: 1, cor: 'red' }, { numero: 2, cor: 'black' },
+        { numero: 3, cor: 'red' }, { numero: 4, cor: 'black' },
+        { numero: 5, cor: 'red' }, { numero: 6, cor: 'black' },
+        { numero: 7, cor: 'red' }, { numero: 8, cor: 'black' },
+        { numero: 9, cor: 'red' }, { numero: 10, cor: 'black' },
+        { numero: 11, cor: 'red' }, { numero: 12, cor: 'black' },
+        { numero: 13, cor: 'red' }, { numero: 14, cor: 'black' }
+    ];
+
+    const NUM_COPIAS = 3;
+    const LARGURA_NUMERO = 80;
     let animacaoAtiva = false;
+
+    function criarEsteira() {
+        const container = document.getElementById('roletaNumbers');
+        container.innerHTML = '';
+        
+        for(let i = 0; i < NUM_COPIAS; i++) {
+            NUMEROS.forEach(num => {
+                const div = document.createElement('div');
+                div.className = `roleta-number ${num.cor}`;
+                div.textContent = num.numero;
+                container.appendChild(div);
+            });
+        }
+    }
+
+    function girarParaNumero(numeroSorteado) {
+        if(animacaoAtiva) return;
+        animacaoAtiva = true;
+        
+        console.log("Número recebido do backend:", numeroSorteado);
+        
+        const index = NUMEROS.findIndex(n => n.numero === numeroSorteado);
+        console.log("Índice encontrado:", index);
+        
+        const posicaoPorVolta = NUMEROS.length * LARGURA_NUMERO;
+        const offsetCentral = (document.querySelector('.roleta-container').offsetWidth / 2) - (LARGURA_NUMERO / 2);
+        const posicaoAlvo = (posicaoPorVolta * 2) + (index * LARGURA_NUMERO) - offsetCentral;
+        
+        const esteira = document.getElementById('roletaNumbers');
+        esteira.style.transition = 'none';
+        esteira.style.transform = `translateX(-${offsetCentral}px)`;
+        void esteira.offsetWidth;
+
+        esteira.style.transition = `transform 4s cubic-bezier(0.33, 0, 0.67, 1)`;
+        esteira.style.transform = `translateX(-${posicaoAlvo}px)`;
+
+        esteira.addEventListener('transitionend', () => {
+            const posicaoFinal = posicaoAlvo % posicaoPorVolta;
+            esteira.style.transition = 'none';
+            esteira.style.transform = `translateX(-${posicaoFinal}px)`;
+            void esteira.offsetWidth;
+            
+            animacaoAtiva = false;
+            document.getElementById('btn-girar').disabled = false;
+        }, { once: true });
+    }
 
     function atualizarAposta() {
         const tipo = document.getElementById('tipo_aposta').value;
@@ -166,12 +171,12 @@
         switch(tipo) {
             case 'numero':
                 html = `<input type="number" class="form-control" 
-                         id="aposta" name="aposta" min="0" max="36" required>`;
+                         id="aposta" name="aposta" min="1" max="14" required>`;
                 break;
             case 'cor':
                 html = `<select class="form-select" id="aposta" name="aposta" required>
-                          <option value="vermelho">Vermelho</option>
-                          <option value="preto">Preto</option>
+                          <option value="red">Vermelho</option>
+                          <option value="black">Preto</option>
                         </select>`;
                 break;
             case 'par_impar':
@@ -182,71 +187,16 @@
                 break;
             case 'baixo_alto':
                 html = `<select class="form-select" id="aposta" name="aposta" required>
-                          <option value="baixo">Baixo (1-18)</option>
-                          <option value="alto">Alto (19-36)</option>
+                          <option value="baixo">Baixo (1-7)</option>
+                          <option value="alto">Alto (8-14)</option>
                         </select>`;
                 break;
         }
         container.innerHTML = html;
     }
 
-    function girarRoleta(numeroSorteado) {
-        if(animacaoAtiva) return;
-        animacaoAtiva = true;
-        
-        const roleta = document.getElementById('roleta');
-        const btn = document.getElementById('btn-girar');
-        btn.disabled = true;
-
-        // 1. Calcular dimensões precisas
-        const primeiroSlot = roleta.firstElementChild;
-        const estilo = window.getComputedStyle(primeiroSlot);
-        const slotWidth = primeiroSlot.offsetWidth + 
-                         parseInt(estilo.marginRight) + 
-                         parseInt(estilo.marginLeft);
-
-        // 2. Encontrar índice correto
-        const index = Array.from(roleta.children)
-            .slice(0, SLOTS_POR_COPIA)
-            .findIndex(slot => parseInt(slot.textContent) === numeroSorteado);
-
-        if(index === -1) {
-            console.error("Número não encontrado:", numeroSorteado);
-            animacaoAtiva = false;
-            btn.disabled = false;
-            return;
-        }
-
-        // 3. Cálculo de posição definitivo
-        const larguraTotal = SLOTS_POR_COPIA * COPIAS * slotWidth;
-        const deslocamentoVirtual = (VOLTAS * SLOTS_POR_COPIA + index) * slotWidth;
-        const deslocamentoReal = deslocamentoVirtual % larguraTotal;
-
-        // 4. Reset inteligente
-        roleta.style.transition = 'none';
-        roleta.style.transform = `translateX(-${deslocamentoReal}px)`;
-        void roleta.offsetWidth;
-
-        // 5. Animação controlada
-        roleta.style.transition = 'transform 4s cubic-bezier(0.4, 0, 0.2, 1)';
-        roleta.style.transform = `translateX(-${deslocamentoVirtual}px)`;
-
-        // 6. Correção final
-        roleta.addEventListener('transitionend', () => {
-            const posicaoFinal = deslocamentoVirtual % (SLOTS_POR_COPIA * slotWidth);
-            roleta.style.transition = 'none';
-            roleta.style.transform = `translateX(-${posicaoFinal}px)`;
-            void roleta.offsetWidth;
-            
-            animacaoAtiva = false;
-            btn.disabled = false;
-        }, { once: true });
-    }
-
-    // Event Listeners
     document.getElementById('tipo_aposta').addEventListener('change', atualizarAposta);
-    document.addEventListener('DOMContentLoaded', atualizarAposta);
-
+    
     document.getElementById('formAposta').addEventListener('submit', async (e) => {
         e.preventDefault();
         if(animacaoAtiva) return;
@@ -261,20 +211,35 @@
                 body: formData
             });
             
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Resposta inválida do servidor');
+            }
+
             const data = await response.json();
-            if(!data.success) throw new Error(data.mensagem);
+            
+            if(!response.ok || !data.success) {
+                throw new Error(data.mensagem || 'Erro desconhecido');
+            }
 
             document.getElementById('saldo').textContent = data.novo_saldo;
             document.getElementById('alert-mensagem').textContent = data.mensagem;
-            document.getElementById('alert-mensagem').className = `alert ${data.message_class}`;
+            document.getElementById('alert-mensagem').className = `alert alert-${data.message_class}`;
             document.getElementById('mensagem-resultado').style.display = 'block';
 
-            girarRoleta(data.numero_sorteado);
+            girarParaNumero(data.numero_sorteado);
 
         } catch (error) {
             alert(error.message);
+            console.error('Erro:', error);
+        } finally {
             btn.disabled = false;
         }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        criarEsteira();
+        atualizarAposta();
     });
 </script>
 

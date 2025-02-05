@@ -107,75 +107,69 @@ def blackjack():
 @login_required
 def roleta():
     user_id = session.get('user_id')
-    saldo = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)[0]["saldo"]
+    user = db.execute("SELECT * FROM users WHERE id = ?", user_id)[0]
+    saldo = user['saldo']
 
     if request.method == 'POST':
+        # Obter dados da aposta
         tipo_aposta = request.form.get('tipo_aposta')
         aposta = request.form.get('aposta')
         valor_apostado = int(request.form.get('valor_apostado'))
 
+        # Validações básicas
         if valor_apostado > saldo:
             return jsonify({
                 "success": False,
                 "mensagem": "Saldo insuficiente."
-            })
+            }), 400
 
-        # Definir resultado (número sorteado e cor)
-        roleta_sequence = [
-            (0, 'verde'),
-            (32, 'vermelho'), (15, 'preto'), (19, 'vermelho'), (4, 'preto'),
-            (21, 'vermelho'), (2, 'preto'), (25, 'vermelho'), (17, 'preto'),
-            (34, 'vermelho'), (6, 'preto'), (27, 'vermelho'), (13, 'preto'),
-            (36, 'vermelho'), (11, 'preto'), (30, 'vermelho'), (8, 'preto'),
-            (23, 'vermelho'), (10, 'preto'), (5, 'vermelho'), (24, 'preto'),
-            (16, 'vermelho'), (33, 'preto'), (1, 'vermelho'), (20, 'preto'),
-            (14, 'vermelho'), (31, 'preto'), (9, 'vermelho'), (22, 'preto'),
-            (18, 'vermelho'), (29, 'preto'), (7, 'vermelho'), (28, 'preto'),
-            (12, 'vermelho'), (35, 'preto'), (3, 'vermelho'), (26, 'preto')
-        ]
-        resultado = random.choice(roleta_sequence)
-        numero_sorteado, cor_resultado = resultado
+        # Gerar resultado (1-14)
+        numero_sorteado = random.randint(1, 14)
+        cor_resultado = 'vermelho' if numero_sorteado % 2 == 1 else 'preto'  # Alterado para padrão Double
+         
 
-        # Lógica de apostas
+
+        # Adicione esta linha para debug:
+        print(f"DEBUG: Número sorteado: {numero_sorteado}, Cor: {cor_resultado}") 
+        # Lógica de apostas atualizada
         ganho = 0
-        if tipo_aposta == "numero" and aposta.isdigit():
-            if int(aposta) == numero_sorteado:
-                ganho = valor_apostado * 35
+        if tipo_aposta == "numero":
+            if aposta.isdigit() and int(aposta) == numero_sorteado:
+                ganho = valor_apostado * 14  # Multiplicador do Double
         elif tipo_aposta == "cor":
             if aposta.lower() == cor_resultado:
                 ganho = valor_apostado * 2
         elif tipo_aposta == "par_impar":
             if (numero_sorteado % 2 == 0 and aposta.lower() == "par") or \
-               (numero_sorteado % 2 != 0 and aposta.lower() == "ímpar"):
+               (numero_sorteado % 2 == 1 and aposta.lower() == "ímpar"):
                 ganho = valor_apostado * 2
         elif tipo_aposta == "baixo_alto":
-            if (1 <= numero_sorteado <= 18 and aposta.lower() == "baixo") or \
-               (19 <= numero_sorteado <= 36 and aposta.lower() == "alto"):
+            if (1 <= numero_sorteado <= 7 and aposta.lower() == "baixo") or \
+               (8 <= numero_sorteado <= 14 and aposta.lower() == "alto"):
                 ganho = valor_apostado * 2
 
         # Atualizar saldo
-        if ganho > 0:
-            saldo += ganho
-            mensagem = f"Você ganhou {ganho} fichas! Resultado: {numero_sorteado} ({cor_resultado})."
-            message_class = "alert-success"
-        else:
-            saldo -= valor_apostado
-            mensagem = f"Você perdeu {valor_apostado} fichas. Resultado: {numero_sorteado} ({cor_resultado})."
-            message_class = "alert-danger"
-
-        db.execute("UPDATE users SET saldo = ?, ganhos = ganhos + ?, perdas = perdas + ? WHERE id = ?",
-                   saldo, ganho, valor_apostado if ganho == 0 else 0, user_id)
+        saldo = saldo + ganho if ganho > 0 else saldo - valor_apostado
+        
+        # Atualizar banco de dados
+        db.execute(
+            "UPDATE users SET saldo = ?, ganhos = ganhos + ?, perdas = perdas + ? WHERE id = ?",
+            saldo,
+            ganho,
+            valor_apostado if ganho == 0 else 0,
+            user_id
+        )
 
         return jsonify({
             "success": True,
             "novo_saldo": saldo,
-            "mensagem": mensagem,
-            "message_class": message_class,
+            "mensagem": f"Você {'ganhou' if ganho > 0 else 'perdeu'} {ganho if ganho > 0 else valor_apostado} fichas! Resultado: {numero_sorteado} ({cor_resultado})",
+            "message_class": "success" if ganho > 0 else "danger",
             "numero_sorteado": numero_sorteado
         })
 
     # GET: Renderizar a página normalmente
-    return render_template('roleta.html', saldo=saldo)    
+    return render_template('roleta.html', saldo=saldo)
 
 
 
