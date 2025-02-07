@@ -1,5 +1,39 @@
 @charset "UTF-8";
 
+:root {
+   --primary-dark: #1a1a2e;
+   --secondary-dark: #16213e;
+   --accent-gold: #FFD700;
+   --neon-red: #ff073a;
+   --text-light: #e6e6e6;
+ }
+ 
+ body {
+   background: var(--primary-dark);
+   color: var(--text-light);
+   font-family: 'Inter', sans-serif;
+ }
+ 
+ .casino-header {
+   background: rgba(22, 33, 62, 0.95);
+   backdrop-filter: blur(10px);
+   border-bottom: 2px solid var(--accent-gold);
+ }
+ 
+ .neon-border {
+   border: 2px solid var(--neon-red);
+   box-shadow: 0 0 15px var(--neon-red);
+ }
+ 
+ .card-animation {
+   transition: transform 0.3s ease, box-shadow 0.3s ease;
+ }
+ 
+ .card-animation:hover {
+   transform: translateY(-5px) rotateZ(1deg);
+   box-shadow: 0 5px 15px var(--accent-gold);
+ }
+
  h1.register {
     text-align: center;
     padding-bottom:20px ;
@@ -29,6 +63,28 @@
    border-radius: 10px;
    background-color: #f8f9fa;
 }
+.slot-machine {
+   border: 3px solid #333;
+   border-radius: 10px;
+   padding: 20px;
+   margin: 20px auto;
+   max-width: 400px;
+   background: #f8f9fa;
+}
+.slot-row {
+   display: flex;
+   justify-content: center;
+   gap: 10px;
+   margin: 10px 0;
+}
+.slot {
+   font-size: 2.5em;
+   padding: 15px;
+   border: 2px solid #dee2e6;
+   border-radius: 5px;
+   min-width: 60px;
+   background: white;
+}
 .perdeu {
    color: rgba(255, 0, 0, 0.692);
 }
@@ -38,79 +94,77 @@
 .empatou {
    color: rgba(255, 255, 0, 0.692);
 }
-.roulette-container {
+.roleta-container {
    position: relative;
-   width: 300px;
-   height: 300px;
-   margin: 0 auto;
-}
-
-#wheel {
-   position: relative;
-   width: 100%;
-   height: 100%;
-   border-radius: 50%;
-   background: #228B22;
-   border: 5px solid #000;
+   width: 800px;
+   margin: 2rem auto;
    overflow: hidden;
 }
 
-.sector {
+.roleta-track {
+   position: relative;
+   height: 100px;
+   background: #1a1a1a;
+   border-radius: 8px;
+   overflow: hidden;
+}
+
+.roleta-numbers {
+   display: flex;
    position: absolute;
-   width: 50%;
-   height: 50%;
-   top: 0;
-   left: 50%;
-   transform-origin: left bottom;
-   clip-path: polygon(0% 100%, 100% 100%, 50% 0%);
+   left: 0;
+   height: 100%;
+   transition: transform 4s cubic-bezier(0.33, 0, 0.67, 1);
+}
+
+.roleta-number {
+   width: 80px;
+   height: 100%;
    display: flex;
    align-items: center;
    justify-content: center;
    font-weight: bold;
-   font-size: 16px;
-}
-
-.sector:nth-child(even) {
-   background: black;
-}
-
-.sector:nth-child(odd) {
-   background: red;
-}
-
-.sector span {
-   position: absolute;
-   top: 20%;
-   left: 50%;
-   transform: translateX(-50%) rotate(-90deg);
-   font-size: 16px;
-   font-weight: bold;
+   font-size: 1.2rem;
    color: white;
+   flex-shrink: 0;
+   border-right: 2px solid #333;
 }
 
-#center {
+.roleta-pointer {
    position: absolute;
-   top: 50%;
+   top: 0;
    left: 50%;
-   transform: translate(-50%, -50%);
-   width: 40px;
-   height: 40px;
-   background: gold;
-   border: 3px solid black;
-   border-radius: 50%;
-   z-index: 5;
-   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-
-#pointer {
-   position: absolute;
-   top: -10px;
-   left: 50%;
+   width: 4px;
+   height: 100%;
+   background: #f1c40f;
+   box-shadow: 0 0 15px #f1c40f;
+   z-index: 2;
    transform: translateX(-50%);
-   width: 20px;
-   height: 20px;
-   border-radius: 50%;
-   background: red;
-   border: 3px solid black;
-   z-index: 10;
+}
+
+.vermelho{ background: #e74c3c; }
+.preto { background: #212529; }
+.verde { background: #27ae60; }
+
+.card {
+   display: inline-block;
+   background: white;
+   border: 1px solid #ddd;
+   border-radius: 5px;
+   padding: 10px;
+   margin: 5px;
+   min-width: 60px;
+   text-align: center;
+   font-weight: bold;
+}
+
+.controls {
+   margin-top: 20px;
+}
+
+.betting-section {
+   background: #f8f9fa;
+   padding: 20px;
+   border-radius: 10px;
+   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }

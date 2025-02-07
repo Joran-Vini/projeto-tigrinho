@@ -4,25 +4,21 @@
 
 {% block main %}
 <div class="container text-center">
-    <h1 class="my-4">Double</h1>
-    
+    <h1 class="my-4">Roleta</h1>
     <p id="saldo-container">
         Saldo Atual: <strong id="saldo">{{ saldo }}</strong> fichas
     </p>
-
     <div id="mensagem-resultado" style="display: none;">
         <div class="alert" role="alert" id="alert-mensagem"></div>
     </div>
-
     <div class="roleta-container">
         <div class="roleta-track" id="roletaTrack">
             <div class="roleta-numbers" id="roletaNumbers">
-                <!-- Números gerados dinamicamente -->
+              
             </div>
         </div>
         <div class="roleta-pointer"></div>
     </div>
-
     <form method="POST" class="my-4" id="formAposta">
         <div class="mb-3">
             <label for="tipo_aposta" class="form-label">Tipo de Aposta</label>
@@ -33,86 +29,38 @@
                 <option value="baixo_alto">Baixo/Alto</option>
             </select>
         </div>
-
         <div class="mb-3" id="campoAposta">
             <label for="aposta" class="form-label">Escolha</label>
             <div id="aposta-container"></div>
         </div>
-
         <div class="mb-3">
             <label for="valor_apostado" class="form-label">Valor Apostado</label>
             <input type="number" id="valor_apostado" name="valor_apostado" 
                    class="form-control" min="1" required>
         </div>
-
         <button type="submit" class="btn btn-primary btn-lg" id="btn-girar">Girar</button>
     </form>
 </div>
 
-<style>
-    .roleta-container {
-        position: relative;
-        width: 800px;
-        margin: 2rem auto;
-        overflow: hidden;
-    }
-
-    .roleta-track {
-        position: relative;
-        height: 100px;
-        background: #1a1a1a;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-
-    .roleta-numbers {
-        display: flex;
-        position: absolute;
-        left: 0;
-        height: 100%;
-        transition: transform 4s cubic-bezier(0.33, 0, 0.67, 1);
-    }
-
-    .roleta-number {
-        width: 80px;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 1.2rem;
-        color: white;
-        flex-shrink: 0;
-        border-right: 2px solid #333;
-    }
-
-    .roleta-pointer {
-        position: absolute;
-        top: 0;
-        left: 50%;
-        width: 4px;
-        height: 100%;
-        background: #f1c40f;
-        box-shadow: 0 0 15px #f1c40f;
-        z-index: 2;
-        transform: translateX(-50%);
-    }
-
-    .red { background: #e74c3c; }
-    .black { background: #212529; }
-</style>
-
 <script>
     const NUMEROS = [
-        { numero: 1, cor: 'red' }, { numero: 2, cor: 'black' },
-        { numero: 3, cor: 'red' }, { numero: 4, cor: 'black' },
-        { numero: 5, cor: 'red' }, { numero: 6, cor: 'black' },
-        { numero: 7, cor: 'red' }, { numero: 8, cor: 'black' },
-        { numero: 9, cor: 'red' }, { numero: 10, cor: 'black' },
-        { numero: 11, cor: 'red' }, { numero: 12, cor: 'black' },
-        { numero: 13, cor: 'red' }, { numero: 14, cor: 'black' }
+        { numero: 0, cor: 'verde' },
+        { numero: 1, cor: 'vermelho' },
+        { numero: 2, cor: 'preto' },
+        { numero: 3, cor: 'vermelho' },
+        { numero: 4, cor: 'preto' },
+        { numero: 5, cor: 'vermelho' },
+        { numero: 6, cor: 'preto' },
+        { numero: 7, cor: 'vermelho' },
+        { numero: 8, cor: 'preto' },
+        { numero: 9, cor: 'vermelho' },
+        { numero: 10, cor: 'preto' },
+        { numero: 11, cor: 'vermelho' },
+        { numero: 12, cor: 'preto' },
+        { numero: 13, cor: 'vermelho' },
+        { numero: 14, cor: 'preto' },
+        { numero: 15, cor: 'verde' }
     ];
-
     const NUM_COPIAS = 3;
     const LARGURA_NUMERO = 80;
     let animacaoAtiva = false;
@@ -131,15 +79,11 @@
         }
     }
 
-    function girarParaNumero(numeroSorteado) {
+    function girarParaNumero(numeroSorteado, resultado) {
         if(animacaoAtiva) return;
         animacaoAtiva = true;
         
-        console.log("Número recebido do backend:", numeroSorteado);
-        
         const index = NUMEROS.findIndex(n => n.numero === numeroSorteado);
-        console.log("Índice encontrado:", index);
-        
         const posicaoPorVolta = NUMEROS.length * LARGURA_NUMERO;
         const offsetCentral = (document.querySelector('.roleta-container').offsetWidth / 2) - (LARGURA_NUMERO / 2);
         const posicaoAlvo = (posicaoPorVolta * 2) + (index * LARGURA_NUMERO) - offsetCentral;
@@ -158,6 +102,12 @@
             esteira.style.transform = `translateX(-${posicaoFinal}px)`;
             void esteira.offsetWidth;
             
+            // Atualiza a interface APÓS a animação
+            document.getElementById('saldo').textContent = resultado.novo_saldo;
+            document.getElementById('alert-mensagem').textContent = resultado.mensagem;
+            document.getElementById('alert-mensagem').className = `alert alert-${resultado.message_class}`;
+            document.getElementById('mensagem-resultado').style.display = 'block';
+            
             animacaoAtiva = false;
             document.getElementById('btn-girar').disabled = false;
         }, { once: true });
@@ -171,12 +121,13 @@
         switch(tipo) {
             case 'numero':
                 html = `<input type="number" class="form-control" 
-                         id="aposta" name="aposta" min="1" max="14" required>`;
+                         id="aposta" name="aposta" min="0" max="15" required>`;
                 break;
             case 'cor':
                 html = `<select class="form-select" id="aposta" name="aposta" required>
-                          <option value="red">Vermelho</option>
-                          <option value="black">Preto</option>
+                          <option value="vermelho">Vermelho</option>
+                          <option value="preto">Preto</option>
+                           <option value="verde">Verde</option>
                         </select>`;
                 break;
             case 'par_impar':
@@ -187,8 +138,8 @@
                 break;
             case 'baixo_alto':
                 html = `<select class="form-select" id="aposta" name="aposta" required>
-                          <option value="baixo">Baixo (1-7)</option>
-                          <option value="alto">Alto (8-14)</option>
+                          <option value="baixo">Baixo (0-7)</option>
+                          <option value="alto">Alto (8-15)</option>
                         </select>`;
                 break;
         }
@@ -222,17 +173,11 @@
                 throw new Error(data.mensagem || 'Erro desconhecido');
             }
 
-            document.getElementById('saldo').textContent = data.novo_saldo;
-            document.getElementById('alert-mensagem').textContent = data.mensagem;
-            document.getElementById('alert-mensagem').className = `alert alert-${data.message_class}`;
-            document.getElementById('mensagem-resultado').style.display = 'block';
-
-            girarParaNumero(data.numero_sorteado);
+            girarParaNumero(data.numero_sorteado, data);
 
         } catch (error) {
             alert(error.message);
             console.error('Erro:', error);
-        } finally {
             btn.disabled = false;
         }
     });

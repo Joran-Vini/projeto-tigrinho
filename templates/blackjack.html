@@ -1,23 +1,146 @@
 {% extends "layout.html" %}
 
-{% block title %}
-   Blackjack
-{% endblock %}
+{% block title %}Blackjack{% endblock %}
+
 {% block main %}
-<div class="container text-center">
-    <h1>Blackjack</h1>
-    <p>Saldo Atual: <strong>{{ saldo }}</strong> fichas</p>
-    <p>Sua mão: {{ player_hand }} ({{ player_hand | calculate_score }})</p>
-    {% if game_over %}
-        <p>Mão do dealer: {{ dealer_hand }} ({{ dealer_hand | calculate_score }})</p>
-        <h2 class="{{ message_class}}">{{ message }}</h2>
-        <a href="/blackjack" class="btn btn-primary">Jogar Novamente</a>
-    {% else %}
-        <p>Mão do dealer: [?, {{ dealer_hand[1] }}]</p>
-        <form method="post">
-            <button type="submit" name="hit" class="btn btn-success">Pedir Carta</button>
-            <button type="submit" name="stand" class="btn btn-danger">Parar</button>
+<div class="container">
+    <h2>Blackjack</h2>
+    <p class="lead">Saldo: {{ saldo }} fichas</p>
+
+    <!-- Tela de Aposta -->
+    {% if not current_bet %}
+    <div class="betting-section">
+        <h3>Faça sua aposta</h3>
+        <form method="POST">
+            <div class="input-group mb-3">
+                <input type="number" 
+                       class="form-control" 
+                       name="bet_amount" 
+                       min="1" 
+                       max="{{ saldo }}" 
+                       placeholder="Quantidade de fichas" 
+                       required>
+                <button type="submit" class="btn btn-primary" name="place_bet">
+                    Apostar
+                </button>
+            </div>
         </form>
+    </div>
+
+    <!-- Tela de Jogo Ativo -->
+    {% elif current_bet and not game_over %}
+    <div class="game-section">
+        <h4>Aposta Atual: {{ current_bet }} fichas</h4>
+        <div class="row">
+            <!-- Suas Cartas -->
+            <div class="col-md-6">
+                <h4>Sua Mão ({{ player_hand | calculate_score }})</h4>
+                {% for card in player_hand %}
+                <span class="card">{{ card }}</span>
+                {% endfor %}
+            </div>
+            
+            <!-- Cartas do Dealer -->
+            <div class="col-md-6">
+                <h4>Mão do Dealer ({{ dealer_hand | calculate_score }})</h4>
+                {% for card in dealer_hand %}
+                <span class="card">{{ card }}</span>
+                {% endfor %}
+                <small>(+1 carta escondida)</small>
+            </div>
+        </div>
+
+        <!-- Botões de Controle -->
+        <div class="controls mt-4">
+            <form method="POST">
+                <button type="submit" name="hit" class="btn btn-success me-2">Pedir Carta</button>
+                <button type="submit" name="stand" class="btn btn-danger">Parar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tela de Resultado Final -->
+    {% elif game_over %}
+    <div class="resultado-final alert alert-{{ message_class }}">
+        <h3>{{ result_message }}</h3>
+        <div class="cartas-final">
+            <div class="sua-mao">
+                <h5>Sua Mão ({{ player_hand | calculate_score }})</h5>
+                {% for card in player_hand %}
+                <span class="card">{{ card }}</span>
+                {% endfor %}
+            </div>
+            <div class="mao-dealer">
+                <h5>Mão do Dealer ({{ dealer_hand | calculate_score }})</h5>
+                {% for card in dealer_hand %}
+                <span class="card">{{ card }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="mt-4">
+            <a href="{{ url_for('blackjack') }}?reset=true" class="btn btn-primary">
+                Jogar Novamente
+            </a>
+        </div>
+    </div>
     {% endif %}
 </div>
+
+<style>
+.card {
+    background: white;
+    border: 2px solid #333;
+    border-radius: 8px;
+    padding: 10px;
+    margin: 5px;
+    min-width: 80px;
+    display: inline-block;
+    text-align: center;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.betting-section {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.game-section {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.resultado-final {
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+.controls {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.sua-mao, .mao-dealer {
+    margin-bottom: 20px;
+}
+
+.cartas-final {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+</style>
+
+<script>
+// Forçar recarregamento ao clicar em "Jogar Novamente"
+document.querySelector('a[href*="blackjack"]')?.addEventListener('click', function(e) {
+    window.location.href = this.href + '&t=' + new Date().getTime();
+});
+</script>
 {% endblock %}

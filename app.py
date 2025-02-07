@@ -14,18 +14,19 @@ db = SQL("sqlite:///tigrinho.db")
 def index():
     return render_template('index.html')
 
-@app.route('/homepage', methods=['GET', 'POST'])
+@app.route('/homepage')
 @login_required
 def homepage():
     user_id = session.get('user_id')
-   # Obter o saldo e nome do usuário logado
     user = db.execute("SELECT username, saldo FROM users WHERE id = ?", user_id)
+    
     if not user:
-        return "Usuário não encontrado.", 404
-    username = user[0]["username"]
-    saldo = user[0]["saldo"]
-    # Renderizar a página com o saldo
-    return render_template('homepage.html',username=username, saldo=saldo)
+        flash("Erro ao carregar perfil. Faça login novamente.", "danger")
+        return redirect(url_for('logout'))
+    
+    return render_template('homepage.html', 
+                         username=user[0]["username"], 
+                         saldo=user[0]["saldo"])
 
 
 # Registrar o filtro calculate_score no Jinja2
@@ -36,72 +37,116 @@ def calculate_score_filter(hand):
 @app.route('/blackjack', methods=['GET', 'POST'])
 @login_required
 def blackjack():
-    # Inicializar o jogo
     user_id = session['user_id']
-    saldo = db.execute("SELECT saldo from users WHERE id = ?", user_id)[0]['saldo']
-    if request.method == 'GET' or 'deck' not in session:
-        deck = create_deck()
-        player_hand = [deck.pop(), deck.pop()]
-        dealer_hand = [deck.pop(), deck.pop()]
-        session['deck'] = deck
-        session['player_hand'] = player_hand
-        session['dealer_hand'] = dealer_hand
-    else:
+    user = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)
+    
+    if not user:
+        flash("Erro de sessão. Faça login novamente.", "danger")
+        return redirect(url_for('login'))
+    
+    saldo = user[0]['saldo']
+
+    # Resetar totalmente o jogo se for uma nova partida
+    if request.method == 'GET' and 'reset' in request.args:
+        session.pop('deck', None)
+        session.pop('player_hand', None)
+        session.pop('dealer_hand', None)
+        session.pop('dealer_hidden', None)
+        session.pop('current_bet', None)
+        session.pop('game_over', None)
+        return redirect(url_for('blackjack'))
+
+    # Fase de APOSTA
+    if request.method == 'POST' and 'place_bet' in request.form:
+        try:
+            current_bet = int(request.form.get('bet_amount'))
+            if current_bet < 1 or current_bet > saldo:
+                flash("Valor de aposta inválido!", "danger")
+                return redirect(url_for('blackjack'))
+            
+            # Iniciar novo jogo com sessão limpa
+            
+            deck = create_deck()
+            session.update({
+                'deck': deck,
+                'player_hand': [deck.pop(), deck.pop()],
+                'dealer_hand': [deck.pop()],  # 1 carta visível
+                'dealer_hidden': deck.pop(),  # 1 carta escondida
+                'current_bet': current_bet,
+                'game_over': False
+            })
+            return redirect(url_for('blackjack'))
+
+        except ValueError:
+            flash("Digite um número válido!", "danger")
+            return redirect(url_for('blackjack'))
+
+    # Fase de JOGO (Hit/Stand)
+    elif request.method == 'POST' and session.get('current_bet'):
         deck = session['deck']
         player_hand = session['player_hand']
         dealer_hand = session['dealer_hand']
-    # Jogador pediu uma carta
-    if request.method == 'POST' and 'hit' in request.form:
-        if saldo < 10:
-            return "Saldo insuficiente", 404
-        player_hand.append(deck.pop())
-        session['player_hand'] = player_hand
-        session['deck'] = deck
-        if calculate_score(player_hand) > 21:
-            perda = 10 
-            saldo -= perda  
-            message_class = "perdeu"
-            db.execute("UPDATE users SET saldo = ?, perdas = perdas + ? WHERE id = ?", saldo, perda, user_id)
-            return render_template('blackjack.html', 
-                                   player_hand=player_hand, 
-                                   dealer_hand=dealer_hand, 
-                                   message="Você estourou! Fim de jogo.", 
-                                   game_over=True, saldo=saldo, message_class=message_class)
-    # Jogador decidiu parar
-    if request.method == 'POST' and 'stand' in request.form:
-        if saldo < 10:
-            return "Saldo insuficiente", 404
-        while calculate_score(dealer_hand) < 17:
-            dealer_hand.append(deck.pop())
-        session['dealer_hand'] = dealer_hand
-        player_score = calculate_score(player_hand)
-        dealer_score = calculate_score(dealer_hand)
-        if dealer_score > 21 or player_score > dealer_score:
-            message = "Você venceu!"
-            ganho = 10
-            saldo += ganho
-            message_class = "ganhou"
-            db.execute("UPDATE users SET ganhos = ganhos + ? WHERE id = ?", ganho, user_id)
-        elif player_score < dealer_score:
-            message = "Você perdeu!"
-            perda = 10
-            saldo -= perda
-            message_class = "perdeu"
-            db.execute("UPDATE users SET perdas = perdas + ? WHERE id = ?", perda, user_id)
-        else:
-            message = "Empate!"
-            message_class = "empatou"
-        db.execute("UPDATE users SET saldo = ? WHERE id = ?", saldo, user_id)    
-        return render_template('blackjack.html', 
-                               player_hand=player_hand, 
-                               dealer_hand=dealer_hand, 
-                               message=message, 
-                               game_over=True,saldo=saldo, message_class=message_class)
-    return render_template('blackjack.html', 
-                           player_hand=player_hand, 
-                           dealer_hand=dealer_hand, 
-                           game_over=False, saldo=saldo)
+        current_bet = session['current_bet']
 
+        if 'hit' in request.form:
+            player_hand.append(deck.pop())
+            session['player_hand'] = player_hand
+            
+            if calculate_score(player_hand) > 21:
+                # Revelar carta escondida e finalizar
+                dealer_hand.append(session['dealer_hidden'])
+                db.execute("UPDATE users SET saldo = saldo - ?, perdas = perdas + ? WHERE id = ?", 
+                          current_bet, current_bet, user_id)
+                session.update({
+                    'game_over': True,
+                    'dealer_hand': dealer_hand,
+                    'result_message': f"Estourou! Perdeu {current_bet} fichas",
+                    'message_class': "danger"
+                })
+
+        elif 'stand' in request.form:
+            # Revelar carta escondida e jogar dealer
+            dealer_hand.append(session['dealer_hidden'])
+            while calculate_score(dealer_hand) < 17:
+                dealer_hand.append(deck.pop())
+            
+            player_score = calculate_score(player_hand)
+            dealer_score = calculate_score(dealer_hand)
+            
+            if dealer_score > 21 or player_score > dealer_score:
+                db.execute("UPDATE users SET saldo = saldo + ?, ganhos = ganhos + ? WHERE id = ?", 
+                          current_bet, current_bet, user_id)
+                result_message = f"Vitória! Ganhou {current_bet} fichas"
+                message_class = "success"
+            elif player_score < dealer_score:
+                db.execute("UPDATE users SET saldo = saldo - ?, perdas = perdas + ? WHERE id = ?", 
+                          current_bet, current_bet, user_id)
+                result_message = f"Derrota! Perdeu {current_bet} fichas"
+                message_class = "danger"
+            else:
+                result_message = "Empate! Fichas devolvidas"
+                message_class = "warning"
+
+            session.update({
+                'game_over': True,
+                'dealer_hand': dealer_hand,
+                'result_message': result_message,
+                'message_class': message_class
+            })
+
+        return redirect(url_for('blackjack'))
+
+    # Atualizar saldo após operações
+    saldo = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)[0]['saldo']
+
+    return render_template('blackjack.html',
+                         saldo=saldo,
+                         game_over=session.get('game_over'),
+                         player_hand=session.get('player_hand'),
+                         dealer_hand=session.get('dealer_hand'),
+                         current_bet=session.get('current_bet'),
+                         result_message=session.get('result_message'),
+                         message_class=session.get('message_class'))
 
 @app.route('/roleta', methods=['GET', 'POST'])
 @login_required
@@ -123,34 +168,35 @@ def roleta():
                 "mensagem": "Saldo insuficiente."
             }), 400
 
-        # Gerar resultado (1-14)
-        numero_sorteado = random.randint(1, 14)
-        cor_resultado = 'vermelho' if numero_sorteado % 2 == 1 else 'preto'  # Alterado para padrão Double
-         
-
-
+        # Gerar resultado (0-15)
+        numero_sorteado = random.randint(0, 15)
+        if numero_sorteado in [0, 15]:
+            cor_resultado = 'green'
+        else:
+            cor_resultado = 'vermelho' if numero_sorteado % 2 == 1 else 'preto' 
         # Adicione esta linha para debug:
         print(f"DEBUG: Número sorteado: {numero_sorteado}, Cor: {cor_resultado}") 
         # Lógica de apostas atualizada
         ganho = 0
         if tipo_aposta == "numero":
             if aposta.isdigit() and int(aposta) == numero_sorteado:
-                ganho = valor_apostado * 14  # Multiplicador do Double
+                ganho = valor_apostado * 15  # Multiplicador do Double
         elif tipo_aposta == "cor":
             if aposta.lower() == cor_resultado:
-                ganho = valor_apostado * 2
+                if aposta.lower() == 'verde':
+                    ganho = valor_apostado * 5
+                else:     
+                    ganho = valor_apostado * 2
         elif tipo_aposta == "par_impar":
             if (numero_sorteado % 2 == 0 and aposta.lower() == "par") or \
                (numero_sorteado % 2 == 1 and aposta.lower() == "ímpar"):
                 ganho = valor_apostado * 2
         elif tipo_aposta == "baixo_alto":
-            if (1 <= numero_sorteado <= 7 and aposta.lower() == "baixo") or \
-               (8 <= numero_sorteado <= 14 and aposta.lower() == "alto"):
+            if (0 <= numero_sorteado <= 7 and aposta.lower() == "baixo") or \
+               (8 <= numero_sorteado <= 15 and aposta.lower() == "alto"):
                 ganho = valor_apostado * 2
-
         # Atualizar saldo
-        saldo = saldo + ganho if ganho > 0 else saldo - valor_apostado
-        
+        saldo = saldo + ganho if ganho > 0 else saldo - valor_apostado  
         # Atualizar banco de dados
         db.execute(
             "UPDATE users SET saldo = ?, ganhos = ganhos + ?, perdas = perdas + ? WHERE id = ?",
@@ -159,7 +205,6 @@ def roleta():
             valor_apostado if ganho == 0 else 0,
             user_id
         )
-
         return jsonify({
             "success": True,
             "novo_saldo": saldo,
@@ -170,8 +215,6 @@ def roleta():
 
     # GET: Renderizar a página normalmente
     return render_template('roleta.html', saldo=saldo)
-
-
 
 @app.route('/niquel', methods=['GET', 'POST'])
 @login_required
@@ -216,27 +259,26 @@ def niquel():
 @app.route('/add', methods=['GET', 'POST'])
 @login_required
 def add():
-    #Obter o id do usuario
     user_id = session.get('user_id')
-    user = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)
-    if not user:
-        return "Usuário não encontrado.", 404
-    saldo = user[0]["saldo"]
+    saldo = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)[0]['saldo']
     if request.method == 'POST':
-         #Obter a quantidade de fichas a serem adicionadas
-        fichas = request.form.get('fichas')
-        #Checar se é um valor possivel
-        if not fichas or not fichas.isdigit() or int(fichas) <= 0:
-            return "Por favor, insira um número válido de fichas.", 400
-    #Atualizar o saldo
-        db.execute("UPDATE users SET saldo = saldo + ? WHERE id = ?", int(fichas), user_id)
-        #Redirecionar usuario para homepage
+        try:
+            fichas = int(request.form.get('fichas'))
+            if fichas <= 0:
+                raise ValueError
+        except:
+            flash("Valor inválido", "danger")
+            return redirect(url_for('add'))
+        
+        db.execute("UPDATE users SET saldo = saldo + ? WHERE id = ?", fichas, user_id)
+        flash(f"+{fichas} fichas adicionadas!", "success")
         return redirect(url_for('homepage'))
-    return render_template("add.html", saldo=saldo)
+    
+    return render_template('add.html', saldo=saldo)
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     #Limpar os dados da sessão anterior
-    session.clear()
     #Checar se é POST
     if request.method == 'POST':
     #Pegar o username e senha
@@ -244,12 +286,14 @@ def login():
        password = request.form.get('password')
        #checar se usuario colocou username ou senha
        if not username or not password:
-        return "Preencha todos os campos!", 400
+            flash("Credenciais inválidas!", "danger")
+            return redirect(url_for('login'))
        #Obter usuario no db
        user = db.execute("SELECT * FROM users WHERE username = ?", username)
        #Verificar se usuario existe e se a senha esta correta
        if len(user) != 1 or not check_password_hash(user[0]['password'], password):
-            return "Usuário ou senha inválidos!", 400
+             flash("Senha ou usuário  inválidos", "danger")
+             return redirect(url_for('login'))
        #redirecionar usuario
        session['user_id'] = user[0]['id']
        return redirect(url_for('homepage'))
@@ -286,7 +330,6 @@ def historico():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
    #Limpar a sessao anterior
-    session.clear()
     if request.method == "POST":
         #Obter os dados
         username = request.form.get('username')
@@ -294,18 +337,21 @@ def register():
         confirm = request.form.get('confirm')
         #Checar se usuario prencheu todos os campos
         if not username or not password or not confirm:
-            return "Preencha todos os campos", 400
+             flash("Preencha todos os dados!", "danger")
+             return redirect(url_for('register'))
         #checar se senha = confirmação
         if password != confirm:
-            return "Confirmação precisa ser igual a senha!", 400
+             flash("Senhas não coincidem!", "danger")
+             return redirect(url_for('register'))
         #Codificar a senha
         hashed_password = generate_password_hash(password)
         #Verificar se usuario ja existe
         user = db.execute("SELECT * FROM users WHERE username = ?", username)
         if user:
-            return "O nome ja foi selecionado", 400
+             flash("Usuário já existe!", "danger")
+             return redirect(url_for('register'))
         #Adicionar dados para db
-        db.execute("INSERT INTO users (username, password, saldo) VALUES(?, ?, ?)", username, hashed_password, 100)
+        db.execute("INSERT INTO users (username, password, saldo, perdas, ganhos) VALUES(?, ?, ?, ?, ?)", username, hashed_password, 100, 0, 0)
         return redirect(url_for('login'))
     else:
         return render_template("register.html")
