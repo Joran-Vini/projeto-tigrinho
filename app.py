@@ -38,6 +38,7 @@ def calculate_score_filter(hand):
 @login_required
 def blackjack():
     user_id = session['user_id']
+    username = db.execute("SELECT username from users WHERE id = ?", user_id)[0]['username']
     user = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)
     
     if not user:
@@ -65,7 +66,6 @@ def blackjack():
                 return redirect(url_for('blackjack'))
             
             # Iniciar novo jogo com sessão limpa
-            
             deck = create_deck()
             session.update({
                 'deck': deck,
@@ -140,7 +140,7 @@ def blackjack():
     saldo = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)[0]['saldo']
 
     return render_template('blackjack.html',
-                         saldo=saldo,
+                         saldo=saldo, username=username,
                          game_over=session.get('game_over'),
                          player_hand=session.get('player_hand'),
                          dealer_hand=session.get('dealer_hand'),
@@ -153,6 +153,7 @@ def blackjack():
 def roleta():
     user_id = session.get('user_id')
     user = db.execute("SELECT * FROM users WHERE id = ?", user_id)[0]
+    username = db.execute("SELECT username from users WHERE id = ?", user_id)[0]['username']
     saldo = user['saldo']
 
     if request.method == 'POST':
@@ -214,13 +215,14 @@ def roleta():
         })
 
     # GET: Renderizar a página normalmente
-    return render_template('roleta.html', saldo=saldo)
+    return render_template('roleta.html', saldo=saldo, username=username)
 
 @app.route('/niquel', methods=['GET', 'POST'])
 @login_required
 def niquel():
     symbols = ["🍒", "🍋", "⭐", "🔔", "🍀", "💎"]
     user_id = session.get('user_id')
+    username = db.execute("SELECT username from users WHERE id = ?", user_id)[0]['username']
     saldo = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)[0]['saldo']
     grid = [[random.choice(symbols) for _ in range(3)] for _ in range(3)]
 
@@ -254,12 +256,13 @@ def niquel():
         return render_template('niquel.html', grid=grid, saldo=saldo,
                              message=message, message_class=message_class)
 
-    return render_template("niquel.html", saldo=saldo, grid=grid)
+    return render_template("niquel.html", saldo=saldo, grid=grid, username=username)
 
 @app.route('/add', methods=['GET', 'POST'])
 @login_required
 def add():
     user_id = session.get('user_id')
+    username = db.execute("SELECT username from users WHERE id = ?", user_id)[0]['username']
     saldo = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)[0]['saldo']
     if request.method == 'POST':
         try:
@@ -274,7 +277,7 @@ def add():
         flash(f"+{fichas} fichas adicionadas!", "success")
         return redirect(url_for('homepage'))
     
-    return render_template('add.html', saldo=saldo)
+    return render_template('add.html', saldo=saldo, username=username)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -310,6 +313,8 @@ def logout():
 @login_required
 def historico():
     user_id = session.get('user_id')
+    username = db.execute("SELECT username from users WHERE id = ?", user_id)[0]['username']
+    saldo = db.execute("SELECT saldo from users WHERE id = ?", user_id)[0]['saldo']
     perdas = db.execute("SELECT perdas FROM users WHERE id = ?", user_id)[0]['perdas']
     ganhos = db.execute("SELECT ganhos FROM users WHERE id = ?", user_id)[0]['ganhos']
     if ganhos > perdas:
@@ -324,7 +329,7 @@ def historico():
         total = 0
         message_class = "empatou"   
         mensagem = "Você ganhou"     
-    return render_template("historico.html", perdas=perdas, ganhos=ganhos, total=total, message_class=message_class, mensagem=mensagem)
+    return render_template("historico.html", perdas=perdas, ganhos=ganhos, total=total, message_class=message_class, mensagem=mensagem, saldo=saldo, username=username)
 
 
 @app.route('/register', methods=['GET', 'POST'])

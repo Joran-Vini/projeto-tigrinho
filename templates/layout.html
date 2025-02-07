@@ -39,7 +39,7 @@
         <nav class="navbar navbar-expand-lg neon-border">
             <div class="container">
                 <a class="navbar-brand me-5" href="{{ url_for('homepage') }}" style="margin-left: -115px;">
-                    <img src="/static/Captura de tela 2025-02-07 182214.png" alt="Logo" class="logo-img" style="height: 50px;">
+                    <img src="/static/logo.png" alt="Logo" class="logo-img" style="height: 50px;">
                 </a>
                 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -95,11 +95,11 @@
                             <!-- Usuário Logado -->
                             <div class="user-info neon-glow">
                                 <i class="bi bi-person-circle"></i> 
-                                <span>{{ session['username'] }}</span>
+                                <span>{{ username }}</span>
                             </div>
                             <div class="saldo-display neon-glow">
                                 <i class="bi bi-coin"></i> 
-                                <span>{{ session['saldo'] | default(0) }}</span>
+                                <span>{{ saldo | default(0) }}</span>
                             </div>
                             <a class="btn btn-danger" href="{{ url_for('logout') }}">
                                 <i class="bi bi-box-arrow-right"></i> Sair
