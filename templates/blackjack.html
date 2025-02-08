@@ -5,8 +5,7 @@
 {% block main %}
 <div class="container">
     <h2>Blackjack</h2>
-    <p class="lead">Saldo: {{ saldo }} fichas</p>
-
+   
     <!-- Tela de Aposta -->
     {% if not current_bet %}
     <div class="betting-section">
@@ -85,57 +84,6 @@
     </div>
     {% endif %}
 </div>
-
-<style>
-.card {
-    background: white;
-    border: 2px solid #333;
-    border-radius: 8px;
-    padding: 10px;
-    margin: 5px;
-    min-width: 80px;
-    display: inline-block;
-    text-align: center;
-    font-size: 1.1rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.betting-section {
-    max-width: 500px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #333;
-    border-radius: 10px;
-}
-
-.game-section {
-    background: #333;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.resultado-final {
-    padding: 20px;
-    border-radius: 10px;
-    margin-top: 20px;
-}
-
-.controls {
-    margin-top: 30px;
-    text-align: center;
-}
-
-.sua-mao, .mao-dealer {
-    margin-bottom: 20px;
-}
-
-.cartas-final {
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-}
-</style>
 
 <script>
 // Forçar recarregamento ao clicar em "Jogar Novamente"

@@ -7,9 +7,6 @@
 <div class="center.form">
     <div class="container text-center">
         <h1 class="my-4">Aqui você pode adicionar fichas!</h1>
-        {% if 'user_id' in session %}
-        <p class="lead">Você possui {{ saldo }} fichas.</p>
-        {% endif %}
         <form action="/add" method="post">
             <label for="fichas">Quantidade de Fichas:</label>
             <input type="number" name="fichas" id="fichas">

@@ -172,7 +172,7 @@ def roleta():
         # Gerar resultado (0-15)
         numero_sorteado = random.randint(0, 15)
         if numero_sorteado in [0, 15]:
-            cor_resultado = 'green'
+            cor_resultado = 'verde'
         else:
             cor_resultado = 'vermelho' if numero_sorteado % 2 == 1 else 'preto' 
         # Adicione esta linha para debug:
@@ -228,27 +228,27 @@ def niquel():
 
     if request.method == 'POST':
         try:
-            aposta = float(request.form.get('aposta'))
+            aposta = int(request.form.get('aposta'))
         except (TypeError, ValueError):
             return render_template('niquel.html', saldo=saldo, grid=grid, 
                                  message="Valor de aposta inválido.", message_class="erro")
 
         if aposta < 1 or aposta > saldo:
             return render_template('niquel.html', saldo=saldo, grid=grid,
-                                 message=f"Aposta deve ser entre 1 e {saldo:.1f}", message_class="erro")
+                                 message=f"Aposta deve ser entre 1 e {saldo}", message_class="erro")
 
         grid = [[random.choice(symbols) for _ in range(3)] for _ in range(3)]
         premiacao = calcular_premiacao(grid, aposta)
 
         if premiacao > 0:
             saldo += premiacao
-            message = f"Você ganhou {premiacao:.1f} fichas"
+            message = f"Você ganhou {premiacao} fichas"
             message_class = "ganhou"
             db.execute("UPDATE users SET saldo = ?, ganhos = ganhos + ? WHERE id = ?",
                      saldo, premiacao, user_id)
         else:
             saldo -= aposta
-            message = f"Você Perdeu {aposta:.1f} fichas"
+            message = f"Você Perdeu {aposta} fichas"
             message_class = "perdeu"
             db.execute("UPDATE users SET saldo = ?, perdas = perdas + ? WHERE id = ?",
                      saldo, aposta, user_id)
