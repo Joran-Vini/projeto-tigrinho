@@ -49,7 +49,7 @@ The **Mini Casino** is a web project developed as part of the CS50 course. It of
   - `calcular_premiacao`: Calculates payouts in the Slot Machine based on matching combinations.
 
 ### 3. **Templates (`layout.html`, `index.html`, `login.html`, `register.html`, etc.)**
-- **`layout.html`**: The base template that defines the common structure for all pages. It includes the navigation bar, header, and footer.
+- **`layout.html`**: The base template that defines the common structure for all pages. It includes the logo, navigation bar, header, and footer.
 - **`index.html`**: The homepage for unauthenticated visitors, with a welcome message and links to login or register.
 - **`login.html`**: The login page, featuring a form for users to enter their credentials.
 - **`register.html`**: The registration page, where new users can create an account.
