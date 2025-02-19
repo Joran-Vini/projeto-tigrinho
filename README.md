@@ -30,9 +30,7 @@ The **Mini Casino** is a web project developed as part of the CS50 course. It of
 ### 4. **Responsive Design**
 - The project is fully responsive, working well on both mobile and desktop devices. The use of **Bootstrap** ensures that the layout adapts to different screen sizes.
 - Custom CSS styles, such as neon borders and animations, create a visually appealing casino-like atmosphere.
-
 ---
-
 ## Project Files
 
 ### 1. **`app.py`**
