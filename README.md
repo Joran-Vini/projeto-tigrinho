@@ -1,2 +1,4 @@
-# projeto-tigrinho
- Projeto "final project cs50"
+# Projeto Mini-Cassino
+#### Video Demo:  <https://youtu.be/cndcIOK5eqw>
+#### Description:
+My project is called Mini-Cassino and
