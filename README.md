@@ -78,7 +78,7 @@ The **Mini Casino** is a web project developed as part of the CS50 course. It of
 ## Design Choices
 
 ### 1. **Use of Flask and SQLite**
-- I chose **Flask** for its simplicity and flexibility, making it ideal for small to medium-sized projects. Flask's lightweight nature allowed me to focus on building features without unnecessary complexity.
+- I chose **Flask** for its simplicity and flexibility and it was the one i learned during my cs50 experience, making it ideal for small to medium-sized projects. Flask's lightweight nature allowed me to focus on building features without unnecessary complexity.
 - **SQLite** was selected for its lightweight nature and seamless integration with Flask. It requires no additional setup, making it perfect for a project of this scale.
 
 ### 2. **Modern and Responsive Design**
