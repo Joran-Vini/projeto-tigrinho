@@ -101,3 +101,4 @@ The **Mini Casino** is a web project developed as part of the CS50 course. It of
    pip install cs50
 ---
 ## Conclusion
+- The **Mini Casino** was a challenging and rewarding project that allowed me to explore various web development concepts. I am proud of the final result and it was a very fun project to develop.
