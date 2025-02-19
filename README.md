@@ -92,12 +92,12 @@ The **Mini Casino** is a web project developed as part of the CS50 course. It of
 ### 4. **Interactivity**
 - Roulette and Blackjack include animations and visual feedback to enhance the user experience. For example, the Roulette wheel spins smoothly, and the Blackjack cards are displayed with a flipping animation.
 - The use of AJAX in Roulette provides a smoother experience without page reloads. This was implemented using JavaScript's `fetch` API to send and receive data asynchronously.
-
 ---
-
 ## How to Run the Project
 
 1. **Install dependencies**:
    ```bash
    pip install Flask
    pip install cs50
+---
+## Conclusion
