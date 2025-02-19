@@ -37,8 +37,7 @@ The **Mini Casino** is a web project developed as part of the CS50 course. It of
 - The core of the project, containing all backend logic.
 - Manages routes, authentication, games, and database interactions.
 - Includes functions to:
-  - Create and shuffle decks of cards for Blackjack.
-  - Calculate scores for hands in Blackjack.
+  - Decide the winner on each game.
   - Handle bets and update user balances.
   - Generate random outcomes for Roulette and the Slot Machine.
 
