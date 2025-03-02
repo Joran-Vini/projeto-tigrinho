@@ -19,13 +19,13 @@ def index():
 def homepage():
     user_id = session.get('user_id')
     user = db.execute("SELECT username, saldo FROM users WHERE id = ?", user_id)
-    
+
     if not user:
         flash("Erro ao carregar perfil. Faça login novamente.", "danger")
         return redirect(url_for('logout'))
-    
-    return render_template('homepage.html', 
-                         username=user[0]["username"], 
+
+    return render_template('homepage.html',
+                         username=user[0]["username"],
                          saldo=user[0]["saldo"])
 
 
@@ -40,11 +40,11 @@ def blackjack():
     user_id = session['user_id']
     username = db.execute("SELECT username from users WHERE id = ?", user_id)[0]['username']
     user = db.execute("SELECT saldo FROM users WHERE id = ?", user_id)
-    
+
     if not user:
         flash("Erro de sessão. Faça login novamente.", "danger")
         return redirect(url_for('login'))
-    
+
     saldo = user[0]['saldo']
 
     # Resetar totalmente o jogo se for uma nova partida
@@ -64,7 +64,7 @@ def blackjack():
             if current_bet < 1 or current_bet > saldo:
                 flash("Valor de aposta inválido!", "danger")
                 return redirect(url_for('blackjack'))
-            
+
             # Iniciar novo jogo com sessão limpa
             deck = create_deck()
             session.update({
@@ -91,11 +91,11 @@ def blackjack():
         if 'hit' in request.form:
             player_hand.append(deck.pop())
             session['player_hand'] = player_hand
-            
+
             if calculate_score(player_hand) > 21:
                 # Revelar carta escondida e finalizar
                 dealer_hand.append(session['dealer_hidden'])
-                db.execute("UPDATE users SET saldo = saldo - ?, perdas = perdas + ? WHERE id = ?", 
+                db.execute("UPDATE users SET saldo = saldo - ?, perdas = perdas + ? WHERE id = ?",
                           current_bet, current_bet, user_id)
                 session.update({
                     'game_over': True,
@@ -109,17 +109,17 @@ def blackjack():
             dealer_hand.append(session['dealer_hidden'])
             while calculate_score(dealer_hand) < 17:
                 dealer_hand.append(deck.pop())
-            
+
             player_score = calculate_score(player_hand)
             dealer_score = calculate_score(dealer_hand)
-            
+
             if dealer_score > 21 or player_score > dealer_score:
-                db.execute("UPDATE users SET saldo = saldo + ?, ganhos = ganhos + ? WHERE id = ?", 
+                db.execute("UPDATE users SET saldo = saldo + ?, ganhos = ganhos + ? WHERE id = ?",
                           current_bet, current_bet, user_id)
                 result_message = f"Vitória! Ganhou {current_bet} fichas"
                 message_class = "success"
             elif player_score < dealer_score:
-                db.execute("UPDATE users SET saldo = saldo - ?, perdas = perdas + ? WHERE id = ?", 
+                db.execute("UPDATE users SET saldo = saldo - ?, perdas = perdas + ? WHERE id = ?",
                           current_bet, current_bet, user_id)
                 result_message = f"Derrota! Perdeu {current_bet} fichas"
                 message_class = "danger"
@@ -174,9 +174,9 @@ def roleta():
         if numero_sorteado in [0, 15]:
             cor_resultado = 'verde'
         else:
-            cor_resultado = 'vermelho' if numero_sorteado % 2 == 1 else 'preto' 
+            cor_resultado = 'vermelho' if numero_sorteado % 2 == 1 else 'preto'
         # Adicione esta linha para debug:
-        print(f"DEBUG: Número sorteado: {numero_sorteado}, Cor: {cor_resultado}") 
+        print(f"DEBUG: Número sorteado: {numero_sorteado}, Cor: {cor_resultado}")
         # Lógica de apostas atualizada
         ganho = 0
         if tipo_aposta == "numero":
@@ -186,7 +186,7 @@ def roleta():
             if aposta.lower() == cor_resultado:
                 if aposta.lower() == 'verde':
                     ganho = valor_apostado * 5
-                else:     
+                else:
                     ganho = valor_apostado * 2
         elif tipo_aposta == "par_impar":
             if (numero_sorteado % 2 == 0 and aposta.lower() == "par") or \
@@ -197,7 +197,7 @@ def roleta():
                (8 <= numero_sorteado <= 15 and aposta.lower() == "alto"):
                 ganho = valor_apostado * 2
         # Atualizar saldo
-        saldo = saldo + ganho if ganho > 0 else saldo - valor_apostado  
+        saldo = saldo + ganho if ganho > 0 else saldo - valor_apostado
         # Atualizar banco de dados
         db.execute(
             "UPDATE users SET saldo = ?, ganhos = ganhos + ?, perdas = perdas + ? WHERE id = ?",
@@ -230,7 +230,7 @@ def niquel():
         try:
             aposta = int(request.form.get('aposta'))
         except (TypeError, ValueError):
-            return render_template('niquel.html', saldo=saldo, grid=grid, 
+            return render_template('niquel.html', saldo=saldo, grid=grid,
                                  message="Valor de aposta inválido.", message_class="erro")
 
         if aposta < 1 or aposta > saldo:
@@ -254,7 +254,7 @@ def niquel():
                      saldo, aposta, user_id)
 
         return render_template('niquel.html', grid=grid, saldo=saldo,
-                             message=message, message_class=message_class)
+                             message=message, message_class=message_class, username=username)
 
     return render_template("niquel.html", saldo=saldo, grid=grid, username=username)
 
@@ -272,11 +272,11 @@ def add():
         except:
             flash("Valor inválido", "danger")
             return redirect(url_for('add'))
-        
+
         db.execute("UPDATE users SET saldo = saldo + ? WHERE id = ?", fichas, user_id)
         flash(f"+{fichas} fichas adicionadas!", "success")
         return redirect(url_for('homepage'))
-    
+
     return render_template('add.html', saldo=saldo, username=username)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -307,7 +307,7 @@ def logout():
     #Esquecer o id do usuario
     session.clear()
     # Voltar o usuario para tela inicial
-    return redirect(url_for('index'))
+    return redirect(url_for('login'))
 
 @app.route("/historico")
 @login_required
@@ -327,8 +327,8 @@ def historico():
         mensagem = "Você perdeu"
     else:
         total = 0
-        message_class = "empatou"   
-        mensagem = "Você ganhou"     
+        message_class = "empatou"
+        mensagem = "Você ganhou"
     return render_template("historico.html", perdas=perdas, ganhos=ganhos, total=total, message_class=message_class, mensagem=mensagem, saldo=saldo, username=username)
 
 
